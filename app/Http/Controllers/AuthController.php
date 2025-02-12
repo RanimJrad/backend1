@@ -12,32 +12,31 @@ use Illuminate\Support\Facades\Log;
 class AuthController extends Controller
 {
     public function login(Request $request)
-    {
-        // Validation des données
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
+{
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email',
+        'password' => 'required',
+    ]);
 
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
-        // Vérification des informations de l'utilisateur
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
-
-        // Génération du token API
-        $token = $user->createToken('backendPFE')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token
-        ], 200);
+    if ($validator->fails()) {
+        return response()->json(['error' => $validator->errors()], 400);
     }
+
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || !Hash::check($request->password, $user->password)) {
+        return response()->json(['error' => 'Invalid credentials'], 401);
+    }
+
+    $token = $user->createToken('backendPFE')->plainTextToken;
+
+    return response()->json([
+        'message' => 'Login successful',
+        'token' => $token,
+        'user' => $user, 
+    ], 200)->header('Content-Type', 'application/json');
+}
+
 
 
 
