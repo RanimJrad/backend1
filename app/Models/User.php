@@ -20,6 +20,9 @@ class User extends Authenticatable
         'numTel',
         'poste',
         'adresse',
+        'role',
+        'image',
+        'cv',
     ];
 
     protected $hidden = [
@@ -29,6 +32,6 @@ class User extends Authenticatable
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'password' => 'hashed', // Laravel 11 automatically hashes passwords
+        'password' => 'hashed',
     ];
 }
