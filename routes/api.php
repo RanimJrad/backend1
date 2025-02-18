@@ -9,7 +9,8 @@ Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
 });
 
 Route::post('login', [AuthController::class, 'login']);
-Route::post('register', [AuthController::class, 'register']);
+Route::middleware('auth:sanctum')->post('register', [AuthController::class, 'register']);
 Route::middleware('auth:sanctum')->get('users', [UserController::class, 'index']);
 Route::middleware('auth:sanctum')->post('logout', [AuthController::class, 'logout']);
 Route::delete('users/{id}', [UserController::class, 'destroy']);
+Route::middleware('auth:sanctum')->put('/user/update/{id}', [AuthController::class, 'updateAdmin']);

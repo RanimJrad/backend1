@@ -10,6 +10,37 @@ use Illuminate\Support\Facades\Validator;
 
 class AuthController extends Controller
 {
+    public function updateAdmin(Request $request, $id)
+{
+    // Validation des données d'entrée
+    $validatedData = $request->validate([
+        'departement' => 'nullable|string',
+        'poste' => 'nullable|string',
+    ]);
+
+    // Récupérer l'utilisateur par son ID
+    $user = User::find($id);
+
+    if (!$user) {
+        return response()->json(['error' => 'Utilisateur non trouvé.'], 404);
+    }
+
+    // Vérifier si le champ département est fourni
+    if ($request->has('departement')) {
+        $user->departement = $validatedData['departement'];
+    }
+
+    // Vérifier si le champ poste est fourni
+    if ($request->has('poste')) {
+        $user->poste = $validatedData['poste'];
+    }
+
+    // Sauvegarder les modifications dans la base de données
+    $user->save();
+
+    // Retourner une réponse de succès
+    return response()->json(['message' => 'Département et poste mis à jour avec succès.'], 200);
+}
     public function logout(Request $request)
     {
         $request->user()->currentAccessToken()->delete();

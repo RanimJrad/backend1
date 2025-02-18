@@ -9,15 +9,24 @@ class UserController extends Controller
 {
     public function index()
     {
-        return response()->json(User::all());
+        $recruteurs = User::where('role', 'recruteur')->get();
+        
+
+        foreach ($recruteurs as $recruteur) {
+            $recruteur->image = $recruteur->image ? asset('storage/' . $recruteur->image) : null;
+            $recruteur->cv = $recruteur->cv ? asset('storage/' . $recruteur->cv) : null;
+
+
+        }
+    
+        return response()->json($recruteurs);
     }
+    
     public function destroy($id)
     {
-        // Récupérer l'utilisateur par son ID
         $user = User::find($id);
 
         if ($user) {
-            // Supprimer l'utilisateur
             $user->delete();
 
             return response()->json(['message' => 'Utilisateur supprimé avec succès'], 200);
