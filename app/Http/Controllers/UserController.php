@@ -34,4 +34,25 @@ class UserController extends Controller
 
         return response()->json(['message' => 'Utilisateur introuvable'], 404);
     }
+
+    public function archiveUser($id)
+    {
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'Utilisateur non trouvé.'], 404);
+        }
+
+        $user->archived = true;
+        $user->save();
+
+        return response()->json(['message' => 'Utilisateur archivé avec succès.'], 200);
+    }
+    public function getArchivedUsers()
+    {
+        $archivedUsers = User::where('archived', true)->get();
+
+        return response()->json($archivedUsers, 200);
+    }
+
 }

@@ -6,6 +6,11 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\RecruiterAdded;
+use Illuminate\Support\Facades\Log;
+
+
 
 
 class AuthController extends Controller
@@ -73,8 +78,9 @@ class AuthController extends Controller
         ], 200);
     }
 
+
     public function register(Request $request)
-{
+    {
     $validator = Validator::make($request->all(), [
         'email' => 'required|email|unique:users,email',
         'password' => 'required|min:8',
@@ -112,14 +118,25 @@ class AuthController extends Controller
         'cv' => $cvPath,
     ]);
 
+    // Envoi de l'email
+    Mail::to($user->email)->send(new RecruiterAdded($user->nom, $request->password));
+
+    if (Mail::failures()) {
+        // Loguer l'erreur ou afficher un message
+        Log::error('Mail failed to send to ' . $user->email);
+    } else {
+        Log::info('Mail sent successfully to ' . $user->email);
+    }
+
     // Génération du token d'authentification
     $token = $user->createToken('backendPFE')->plainTextToken;
 
     return response()->json([
-        'message' => 'Registration successful',
+        'message' => 'Registration successful and email sent!',
         'token' => $token,
         'user' => $user,
     ], 201);
 }
 
+    
 }
