@@ -21,7 +21,7 @@ class RecruiterAdded extends Mailable
     public function build()
     {
         return $this->subject('Nouvel utilisateur recruteur ajouté')
-                    ->view('emails.recruiter_added')
+                    ->view('emails.recruiterAdded')
                     ->with([
                         'recruiterName' => $this->recruiterName,
                         'password' => $this->password,

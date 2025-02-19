@@ -8,19 +8,18 @@ use App\Models\User;
 class UserController extends Controller
 {
     public function index()
-    {
-        $recruteurs = User::where('role', 'recruteur')->get();
-        
+{
+    $recruteurs = User::where('role', 'recruteur')
+                      ->where('archived', 0)
+                      ->get();
 
-        foreach ($recruteurs as $recruteur) {
-            $recruteur->image = $recruteur->image ? asset('storage/' . $recruteur->image) : null;
-            $recruteur->cv = $recruteur->cv ? asset('storage/' . $recruteur->cv) : null;
-
-
-        }
-    
-        return response()->json($recruteurs);
+    foreach ($recruteurs as $recruteur) {
+        $recruteur->image = $recruteur->image ? asset('storage/' . $recruteur->image) : null;
+        $recruteur->cv = $recruteur->cv ? asset('storage/' . $recruteur->cv) : null;
     }
+
+    return response()->json($recruteurs);
+}
     
     public function destroy($id)
     {

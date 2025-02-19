@@ -118,15 +118,10 @@ class AuthController extends Controller
         'cv' => $cvPath,
     ]);
 
-    // Envoi de l'email
-    Mail::to($user->email)->send(new RecruiterAdded($user->nom, $request->password));
+    Mail::to($user->email)->send(new RecruiterAdded($user->prenom . ' ' . $user->nom, $request->password));
 
-    if (Mail::failures()) {
-        // Loguer l'erreur ou afficher un message
-        Log::error('Mail failed to send to ' . $user->email);
-    } else {
-        Log::info('Mail sent successfully to ' . $user->email);
-    }
+
+   
 
     // Génération du token d'authentification
     $token = $user->createToken('backendPFE')->plainTextToken;
@@ -137,6 +132,70 @@ class AuthController extends Controller
         'user' => $user,
     ], 201);
 }
+
+    public function updateRec(Request $request, $id)
+    {
+        // Validation des données entrantes
+        $validatedData = $request->validate([
+            'email' => 'nullable|email|unique:users,email,' . $id,
+            'password' => 'nullable|min:8',
+            'nom' => 'nullable|string',
+            'prenom' => 'nullable|string',
+            'numTel' => 'nullable|string',
+            'adresse' => 'nullable|string',
+            'image' => 'nullable|file|mimes:jpeg,png,jpg|max:2048',
+            'cv' => 'nullable|file|mimes:pdf|max:5120',
+        ]);
+
+        // Trouver l'utilisateur
+        $user = User::find($id);
+
+        if (!$user) {
+            return response()->json(['error' => 'Utilisateur non trouvé.'], 404);
+        }
+
+        // Mise à jour des champs s'ils sont fournis
+        if ($request->has('email')) {
+            $user->email = $validatedData['email'];
+        }
+
+        if ($request->has('password')) {
+            $user->password = Hash::make($validatedData['password']);
+        }
+
+        if ($request->has('nom')) {
+            $user->nom = $validatedData['nom'];
+        }
+
+        if ($request->has('prenom')) {
+            $user->prenom = $validatedData['prenom'];
+        }
+
+        if ($request->has('numTel')) {
+            $user->numTel = $validatedData['numTel'];
+        }
+
+        if ($request->has('adresse')) {
+            $user->adresse = $validatedData['adresse'];
+        }
+
+        // Gérer l'upload de l'image si elle est fournie
+        if ($request->hasFile('image')) {
+            $imagePath = $request->file('image')->store('images', 'public');
+            $user->image = $imagePath;
+        }
+
+        // Gérer l'upload du CV si fourni
+        if ($request->hasFile('cv')) {
+            $cvPath = $request->file('cv')->store('cv', 'public');
+            $user->cv = $cvPath;
+        }
+
+        // Sauvegarde des modifications
+        $user->save();
+
+        return response()->json(['message' => 'Utilisateur mis à jour avec succès.', 'user' => $user], 200);
+    }
 
     
 }
