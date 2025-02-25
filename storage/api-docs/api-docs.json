@@ -1,0 +1,859 @@
+{
+    "openapi": "3.0.0",
+    "info": {
+        "title": "API Documentation",
+        "description": "Documentation de l'API pour la gestion des utilisateurs et l'authentification.",
+        "contact": {
+            "email": "ranimjrad0@gmail.com"
+        },
+        "license": {
+            "name": "MIT",
+            "url": "https://opensource.org/licenses/MIT"
+        },
+        "version": "1.0.0"
+    },
+    "paths": {
+        "/api/profile": {
+            "get": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Afficher le profil de l'utilisateur connecté",
+                "operationId": "3356c28b2b5c4905b85d9f6278fac5e3",
+                "responses": {
+                    "200": {
+                        "description": "Profil utilisateur récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer"
+                                        },
+                                        "email": {
+                                            "type": "string"
+                                        },
+                                        "departement": {
+                                            "type": "string"
+                                        },
+                                        "nom": {
+                                            "type": "string"
+                                        },
+                                        "prenom": {
+                                            "type": "string"
+                                        },
+                                        "numTel": {
+                                            "type": "string"
+                                        },
+                                        "poste": {
+                                            "type": "string"
+                                        },
+                                        "adresse": {
+                                            "type": "string"
+                                        },
+                                        "image": {
+                                            "type": "string"
+                                        },
+                                        "cv": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/admins/{id}": {
+            "put": {
+                "tags": [
+                    "Administrateurs"
+                ],
+                "summary": "Mettre à jour le département et le poste d'un administrateur",
+                "operationId": "b26e5897e3fd266ad19079a3d8d957de",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'administrateur à mettre à jour",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [],
+                                "properties": {
+                                    "departement": {
+                                        "type": "string",
+                                        "example": "Informatique"
+                                    },
+                                    "poste": {
+                                        "type": "string",
+                                        "example": "Manager"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mise à jour réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Département et poste mis à jour avec succès."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé"
+                    },
+                    "400": {
+                        "description": "Erreur de validation"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/logout": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Déconnexion de l'utilisateur",
+                "operationId": "fe8f3429cd6979b3b4517e186505f9f9",
+                "responses": {
+                    "200": {
+                        "description": "Déconnexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Logged out successfully"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/login": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Connexion d'un utilisateur",
+                "operationId": "a3b306d14572d1f4bd6c064b3233e7b8",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "password123"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Connexion réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "token": {
+                                            "type": "string"
+                                        },
+                                        "user": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Identifiants invalides"
+                    },
+                    "400": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/api/register": {
+            "post": {
+                "tags": [
+                    "Authentification"
+                ],
+                "summary": "Enregistrer un nouvel utilisateur",
+                "description": "Créer un nouvel utilisateur avec une image et un CV",
+                "operationId": "8a56853624e025573120a09a4c75d468",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "multipart/form-data": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "password",
+                                    "departement",
+                                    "nom",
+                                    "prenom",
+                                    "numTel",
+                                    "poste",
+                                    "adresse",
+                                    "role",
+                                    "image",
+                                    "cv"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "user@example.com"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "format": "password",
+                                        "example": "12345678"
+                                    },
+                                    "departement": {
+                                        "type": "string",
+                                        "example": "Informatique"
+                                    },
+                                    "nom": {
+                                        "type": "string",
+                                        "example": "Doe"
+                                    },
+                                    "prenom": {
+                                        "type": "string",
+                                        "example": "John"
+                                    },
+                                    "numTel": {
+                                        "type": "string",
+                                        "example": "98765432"
+                                    },
+                                    "poste": {
+                                        "type": "string",
+                                        "example": "Développeur"
+                                    },
+                                    "adresse": {
+                                        "type": "string",
+                                        "example": "123 Rue Exemple"
+                                    },
+                                    "role": {
+                                        "type": "string",
+                                        "example": "admin"
+                                    },
+                                    "image": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    },
+                                    "cv": {
+                                        "type": "string",
+                                        "format": "binary"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Inscription réussie",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Registration successful and email sent!"
+                                        },
+                                        "token": {
+                                            "type": "string",
+                                            "example": "2|somerandomtoken"
+                                        },
+                                        "user": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "email": {
+                                                    "type": "string",
+                                                    "example": "user@example.com"
+                                                },
+                                                "nom": {
+                                                    "type": "string",
+                                                    "example": "Doe"
+                                                },
+                                                "prenom": {
+                                                    "type": "string",
+                                                    "example": "John"
+                                                },
+                                                "image": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/images/user.jpg"
+                                                },
+                                                "cv": {
+                                                    "type": "string",
+                                                    "example": "http://example.com/storage/cv/user.pdf"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Erreur de validation",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "object",
+                                            "additionalProperties": {
+                                                "type": "array",
+                                                "items": {
+                                                    "type": "string"
+                                                }
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/addOffres": {
+            "post": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Ajouter une offre",
+                "operationId": "26456097db36cdba2b2845aa17202922",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "departement",
+                                    "poste",
+                                    "description",
+                                    "dateExpiration"
+                                ],
+                                "properties": {
+                                    "departement": {
+                                        "type": "string",
+                                        "example": "Informatique"
+                                    },
+                                    "poste": {
+                                        "type": "string",
+                                        "example": "Développeur Backend"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Développement en Laravel"
+                                    },
+                                    "dateExpiration": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-05-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Offre ajoutée avec succès"
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
+        "/api/AlloffresValide": {
+            "get": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Récupérer toutes les offres validées",
+                "operationId": "4f25cd706aa858403de5d73ef8f02536",
+                "responses": {
+                    "200": {
+                        "description": "Liste des offres validées"
+                    }
+                }
+            }
+        },
+        "/api/Alloffresnvalide": {
+            "get": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Récupérer toutes les offres non validées",
+                "operationId": "98200bb4001386e9557d79af87f7d5f1",
+                "responses": {
+                    "200": {
+                        "description": "Liste des offres non validées"
+                    }
+                }
+            }
+        },
+        "/api/offres-departement": {
+            "get": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Récupérer les offres selon le département de l'utilisateur connecté",
+                "operationId": "6d43d2b77df7a932d57227363688bad3",
+                "responses": {
+                    "200": {
+                        "description": "Liste des offres du département"
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/validerOffre/{id}": {
+            "put": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Valider une offre par son ID",
+                "operationId": "f8cba03a17557ccfc6a395d6ce43c3d2",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'offre à valider",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Offre validée avec succès"
+                    },
+                    "404": {
+                        "description": "Offre non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/supprimerOffre/{id}": {
+            "delete": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Supprimer une offre par son ID",
+                "operationId": "cfa40483e38c84b3268a2a4c7eec3d25",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'offre à supprimer",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Offre supprimée avec succès"
+                    },
+                    "404": {
+                        "description": "Offre non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/offres-departement/{id}": {
+            "put": {
+                "tags": [
+                    "Offres"
+                ],
+                "summary": "Modifier une offre non validée",
+                "operationId": "9fd8e5b682664ca4c6ae778910561dd8",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'offre à modifier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "properties": {
+                                    "departement": {
+                                        "type": "string",
+                                        "example": "RH"
+                                    },
+                                    "poste": {
+                                        "type": "string",
+                                        "example": "Manager"
+                                    },
+                                    "description": {
+                                        "type": "string",
+                                        "example": "Gestion des équipes"
+                                    },
+                                    "dateExpiration": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-07-01"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Offre modifiée avec succès"
+                    },
+                    "404": {
+                        "description": "Offre non trouvée"
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/users": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Récupérer tous les recruteurs non archivés",
+                "description": "Obtenir une liste de tous les recruteurs actifs",
+                "operationId": "c457726701591d1183b53aa71fc13441",
+                "responses": {
+                    "200": {
+                        "description": "Liste des recruteurs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "user@example.com"
+                                            },
+                                            "image": {
+                                                "type": "string",
+                                                "example": "http://example.com/storage/images/user.jpg"
+                                            },
+                                            "cv": {
+                                                "type": "string",
+                                                "example": "http://example.com/storage/cv/user.pdf"
+                                            },
+                                            "role": {
+                                                "type": "string",
+                                                "example": "recruteur"
+                                            },
+                                            "archived": {
+                                                "type": "boolean",
+                                                "example": false
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/unarchive/{id}": {
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Désarchiver un utilisateur",
+                "description": "Désarchiver un utilisateur par son ID",
+                "operationId": "784eb26a4d2795543f9606761640ff2c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur désarchivé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur désarchivé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/archive/{id}": {
+            "put": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Archiver un utilisateur",
+                "description": "Archiver un utilisateur par son ID",
+                "operationId": "c728c68e408ac6b3242aba9eeb46b314",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Utilisateur archivé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Utilisateur archivé avec succès"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Utilisateur non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Utilisateur non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/users/archived": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Récupérer tous les utilisateurs archivés",
+                "description": "Obtenir une liste de tous les utilisateurs archivés",
+                "operationId": "2385c880faa50e080df028ec62453459",
+                "responses": {
+                    "200": {
+                        "description": "Liste des utilisateurs archivés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "email": {
+                                                "type": "string",
+                                                "example": "user@example.com"
+                                            },
+                                            "cv": {
+                                                "type": "string",
+                                                "example": "http://example.com/storage/cv/user.pdf"
+                                            },
+                                            "role": {
+                                                "type": "string",
+                                                "example": "recruteur"
+                                            },
+                                            "archived": {
+                                                "type": "boolean",
+                                                "example": true
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "tags": [
+        {
+            "name": "Authentification",
+            "description": "Authentification"
+        },
+        {
+            "name": "Administrateurs",
+            "description": "Administrateurs"
+        },
+        {
+            "name": "Offres",
+            "description": "Offres"
+        },
+        {
+            "name": "Utilisateurs",
+            "description": "Utilisateurs"
+        }
+    ]
+}
