@@ -2,18 +2,96 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Candidat;
 use Illuminate\Http\Request;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 
+/**
+ * @OA\Components(
+ *     @OA\Schema(
+ *         schema="Candidat",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="nom", type="string", example="Dupont"),
+ *         @OA\Property(property="prenom", type="string", example="Jean"),
+ *         @OA\Property(property="email", type="string", example="jean.dupont@example.com"),
+ *         @OA\Property(property="pays", type="string", example="France"),
+ *         @OA\Property(property="ville", type="string", example="Paris"),
+ *         @OA\Property(property="codePostal", type="string", example="75001"),
+ *         @OA\Property(property="niveauExperience", type="string", example="Intermédiaire"),
+ *         @OA\Property(property="tel", type="string", example="0123456789"),
+ *         @OA\Property(property="niveauEtude", type="string", example="Licence"),
+ *         @OA\Property(property="cv", type="string", example="path/to/cv.pdf"),
+ *         @OA\Property(property="offre_id", type="integer", example=2),
+ *         @OA\Property(property="archived", type="boolean", example=true)
+ *     ),
+ *     @OA\Schema(
+ *         schema="User",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="email", type="string", example="user@example.com"),
+ *         @OA\Property(property="image", type="string", example="http://example.com/storage/images/user.jpg"),
+ *         @OA\Property(property="cv", type="string", example="http://example.com/storage/cv/user.pdf"),
+ *         @OA\Property(property="role", type="string", example="recruteur"),
+ *         @OA\Property(property="archived", type="boolean", example=false),
+ *         @OA\Property(property="nom_societe", type="string", example="ABC Corp"),
+ *         @OA\Property(property="domaine_activite", type="string", example="IT"),
+ *         @OA\Property(property="apropos", type="string", example="About the company"),
+ *         @OA\Property(property="lien_site_web", type="string", example="http://example.com")
+ *     )
+ * )
+ */
+
+
+
+
 
 class UserController extends Controller
 {
-    /**
+
+/**
+ * @OA\Get(
+ *     path="/api/recruteurs_acceuil",
+ *     summary="Récupérer les recruteurs non archivés",
+ *     description="Obtenir une liste de tous les recruteurs actifs.",
+ *     tags={"Recruteurs"},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des recruteurs",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(
+ *                 type="object",
+ *                 @OA\Property(property="nom_societe", type="string", example="ABC Corp"),
+ *                 @OA\Property(property="image", type="string", example="http://example.com/storage/images/recruiter.jpg"),
+ *                 @OA\Property(property="domaine_activite", type="string", example="IT"),
+ *                 @OA\Property(property="apropos", type="string", example="About the company"),
+ *                 @OA\Property(property="lien_site_web", type="string", example="http://example.com")
+ *             )
+ *         )
+ *     )
+ * )
+ */
+
+    public function recruteurAcceuil()
+    {
+        $recruteurs = User::where('role', 'recruteur')
+                          ->where('archived', 0)
+                          ->select(   'nom_societe', 'image','domaine_activite','apropos','lien_site_web') // Sélectionner uniquement les champs nécessaires
+                          ->get();
+    
+        foreach ($recruteurs as $recruteur) {
+            $recruteur->image = $recruteur->image ? asset('storage/' . $recruteur->image) : null;
+        }
+    
+        return response()->json($recruteurs);
+    }
+/**
  * @OA\Get(
  *     path="/api/users",
  *     summary="Récupérer tous les recruteurs non archivés",
- *     description="Obtenir une liste de tous les recruteurs actifs",
+ *     description="Obtenir une liste de tous les recruteurs actifs.",
  *     tags={"Utilisateurs"},
  *     @OA\Response(
  *         response=200,
@@ -33,6 +111,7 @@ class UserController extends Controller
  *     )
  * )
  */
+
     public function index()
 {
     $recruteurs = User::where('role', 'recruteur')
@@ -41,13 +120,12 @@ class UserController extends Controller
 
     foreach ($recruteurs as $recruteur) {
         $recruteur->image = $recruteur->image ? asset('storage/' . $recruteur->image) : null;
-        $recruteur->cv = $recruteur->cv ? asset('storage/' . $recruteur->cv) : null;
     }
 
     return response()->json($recruteurs);
 }
   
-    /**
+ /**
  * @OA\Put(
  *     path="/api/users/unarchive/{id}",
  *     summary="Désarchiver un utilisateur",
@@ -75,6 +153,7 @@ class UserController extends Controller
  *     )
  * )
  */
+
     public function unarchiveUser($id)
     {
         $user = User::find($id);
@@ -88,7 +167,7 @@ class UserController extends Controller
     
         return response()->json(['message' => 'Utilisateur désarchivé avec succès.'], 200);
     }
-    /**
+   /**
  * @OA\Put(
  *     path="/api/users/archive/{id}",
  *     summary="Archiver un utilisateur",
@@ -116,6 +195,9 @@ class UserController extends Controller
  *     )
  * )
  */
+
+
+ 
     public function archiveUser($id)
     {
         $user = User::find($id);
@@ -133,7 +215,7 @@ class UserController extends Controller
  * @OA\Get(
  *     path="/api/users/archived",
  *     summary="Récupérer tous les utilisateurs archivés",
- *     description="Obtenir une liste de tous les utilisateurs archivés",
+ *     description="Obtenir une liste de tous les utilisateurs archivés.",
  *     tags={"Utilisateurs"},
  *     @OA\Response(
  *         response=200,
@@ -156,22 +238,208 @@ class UserController extends Controller
     public function getArchivedUsers()
     {
         $archivedUsers = User::where('archived', true)->get();
-        foreach ($archivedUsers as $recruteur) {
-            $recruteur->cv = $recruteur->cv ? asset('storage/' . $recruteur->cv) : null;
-        }
         return response()->json($archivedUsers, 200);
     }
 
-    public function getCurrentUserInfo()
-    {
-        $user = Auth::user();
-        
-        return response()->json([
-            'nom' => $user->nom,
-            'prenom' => $user->prenom,
-            'image' => $user->image ? asset('storage/' . $user->image) : null,
-        ]);
 
+    
+/**
+ * @OA\Get(
+ *     path="/api/user/info",
+ *     summary="Récupérer les informations de l'utilisateur connecté",
+ *     description="Retourne les informations de l'utilisateur actuellement authentifié.",
+ *     tags={"Utilisateurs"},
+ *     security={{ "sanctum": {} }},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Informations de l'utilisateur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="nom_societe", type="string", example="ABC Corp"),
+ *             @OA\Property(property="image", type="string", example="http://example.com/storage/images/user.jpg")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Non autorisé",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Non authentifié")
+ *         )
+ *     )
+ * )
+ */
+public function getCurrentUserInfo()
+ {
+     $user = Auth::user();
+     
+     return response()->json([
+        'nom_societe' => $user->nom_societe ?? null,
+         'image' => $user->image ? asset('storage/' . $user->image) : null,
+     ]);
+
+ }
+
+ /**
+     * @OA\Get(
+     *     path="/api/recherche-candidat-archive",
+     *     summary="Rechercher des candidats archivés",
+     *     description="Rechercher des candidats archivés en fonction du nom et du prénom.",
+     *     tags={"Candidats"},
+     *     @OA\Parameter(
+     *         name="nom",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", example="Dupont")
+     *     ),
+     *     @OA\Parameter(
+     *         name="prenom",
+     *         in="query",
+     *         required=false,
+     *         @OA\Schema(type="string", example="Jean")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des candidats archivés trouvés",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Candidat")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Aucun candidat trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Aucun candidat trouvé.")
+     *         )
+     *     )
+     * )
+     */
+
+ public function rechercheCandidatArchive($nom = null, $prenom = null)
+{
+    $query = Candidat::where('archived', 1);
+
+    if (!empty($nom)) {
+        $query->where('nom', 'like', '%' . $nom . '%');
     }
+    if (!empty($prenom)) {
+        $query->where('prenom', 'like', '%' . $prenom . '%');
+    }
+
+    return $query->get();
+}
+
+/**
+ * @OA\Get(
+ *     path="/api/recherche-candidat",
+ *     summary="Rechercher des candidats",
+ *     description="Rechercher des candidats en fonction du nom et du prénom.",
+ *     tags={"Candidats"},
+ *     @OA\Parameter(
+ *         name="nom",
+ *         in="query",
+ *         required=false,
+ *         @OA\Schema(type="string", example="Dupont")
+ *     ),
+ *     @OA\Parameter(
+ *         name="prenom",
+ *         in="query",
+ *         required=false,
+ *         @OA\Schema(type="string", example="Jean")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des candidats",
+ *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Candidat"))
+ *     )
+ * )
+ */
+
+public function rechercheCandidat($nom = null, $prenom = null)
+{
+    $query = Candidat::query();
+
+    if (!empty($nom)) {
+        $query->where('nom', 'like', '%' . $nom . '%');
+    }
+    if (!empty($prenom)) {
+        $query->where('prenom', 'like', '%' . $prenom . '%');
+    }
+
+    return $query->get();
+}
+
+/**
+ * @OA\Get(
+ *     path="/api/recruteurs-archives/recherche",
+ *     summary="Rechercher des recruteurs archivés",
+ *     description="Rechercher des recruteurs archivés par lettre.",
+ *     tags={"Recruteurs"},
+ *     @OA\Parameter(
+ *         name="letter",
+ *         in="query",
+ *         required=true,
+ *         @OA\Schema(type="string", example="A")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des recruteurs archivés",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/User")
+ *         )
+ *     )
+ * )
+ */
+
+
+
+public function searchArchivedRecruiters(Request $request)
+{
+    $letter = $request->input('letter');
+
+    $recruiters = User::where('archived', true)
+        ->where('role', 'recruteur')
+        ->where(function ($query) use ($letter) {
+            $query->where('nom_societe', 'LIKE', "%$letter%");
+        })
+        ->get();
+
+    return response()->json($recruiters);
+}
+
+/**
+ * @OA\Get(
+ *     path="/api/recherche-recruteur",
+ *     summary="Rechercher des recruteurs",
+ *     description="Rechercher des recruteurs par lettre.",
+ *     tags={"Recruteurs"},
+ *     @OA\Parameter(
+ *         name="letter",
+ *         in="query",
+ *         required=true,
+ *         @OA\Schema(type="string", example="A")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des recruteurs",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/User")
+ *         )
+ *     )
+ * )
+ */
+
+public function rechercheRecruteur($nomSociete = null)
+{
+    $query = User::query();
+
+    if (!empty($nomSociete)) {
+        $query->where('nom_societe', 'like', '%' . $nomSociete . '%');
+    }
+
+    return $query->get();
+}
+
 
 }

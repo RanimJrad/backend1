@@ -4,7 +4,7 @@
         "title": "API Documentation",
         "description": "Documentation de l'API pour la gestion des utilisateurs et l'authentification.",
         "contact": {
-            "email": "ranimjrad0@gmail.com"
+            "email": "sahliabderazak530@gmail.com"
         },
         "license": {
             "name": "MIT",
@@ -399,120 +399,216 @@
                 }
             }
         },
-        "/api/addOffres": {
-            "post": {
-                "tags": [
-                    "Offres"
-                ],
-                "summary": "Ajouter une offre",
-                "operationId": "26456097db36cdba2b2845aa17202922",
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "required": [
-                                    "departement",
-                                    "poste",
-                                    "description",
-                                    "dateExpiration"
-                                ],
-                                "properties": {
-                                    "departement": {
-                                        "type": "string",
-                                        "example": "Informatique"
-                                    },
-                                    "poste": {
-                                        "type": "string",
-                                        "example": "Développeur Backend"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Développement en Laravel"
-                                    },
-                                    "dateExpiration": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2025-05-01"
-                                    }
-                                },
-                                "type": "object"
-                            }
-                        }
-                    }
-                },
-                "responses": {
-                    "201": {
-                        "description": "Offre ajoutée avec succès"
-                    },
-                    "422": {
-                        "description": "Erreur de validation"
-                    }
-                }
-            }
-        },
-        "/api/AlloffresValide": {
-            "get": {
-                "tags": [
-                    "Offres"
-                ],
-                "summary": "Récupérer toutes les offres validées",
-                "operationId": "4f25cd706aa858403de5d73ef8f02536",
-                "responses": {
-                    "200": {
-                        "description": "Liste des offres validées"
-                    }
-                }
-            }
-        },
         "/api/Alloffresnvalide": {
             "get": {
                 "tags": [
                     "Offres"
                 ],
-                "summary": "Récupérer toutes les offres non validées",
+                "summary": "Afficher les offres non validées et non expirées",
                 "operationId": "98200bb4001386e9557d79af87f7d5f1",
                 "responses": {
                     "200": {
-                        "description": "Liste des offres non validées"
+                        "description": "Liste des offres non validées et non expirées"
                     }
                 }
             }
         },
-        "/api/offres-departement": {
+        "/api/temoiniage": {
+            "post": {
+                "tags": [
+                    "Témoignage"
+                ],
+                "summary": "Ajouter un témoignage",
+                "description": "Permet à un utilisateur d'ajouter un témoignage, en attente de validation par un administrateur.",
+                "operationId": "storeTestimonial",
+                "requestBody": [
+                    {
+                        "mediaType": "application/json",
+                        "schema": {
+                            "required": [
+                                "nom",
+                                "email",
+                                "temoignage"
+                            ],
+                            "properties": {
+                                "nom": {
+                                    "description": "Nom de l'utilisateur",
+                                    "type": "string"
+                                },
+                                "email": {
+                                    "description": "Email de l'utilisateur",
+                                    "type": "string"
+                                },
+                                "temoignage": {
+                                    "description": "Le contenu du témoignage",
+                                    "type": "string"
+                                }
+                            },
+                            "type": "object"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Témoignage ajouté avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "temoignage": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "nom": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "temoignage": {
+                                                    "type": "string"
+                                                },
+                                                "valider": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Erreur de validation des données"
+                    }
+                }
+            }
+        },
+        "/api/temoignagesValides": {
             "get": {
                 "tags": [
-                    "Offres"
+                    "Témoignage"
                 ],
-                "summary": "Récupérer les offres selon le département de l'utilisateur connecté",
-                "operationId": "6d43d2b77df7a932d57227363688bad3",
+                "summary": "Récupérer tous les témoignages validés",
+                "description": "Cette fonction récupère tous les témoignages validés par un administrateur.",
+                "operationId": "getValidTestimonials",
                 "responses": {
                     "200": {
-                        "description": "Liste des offres du département"
+                        "description": "Liste des témoignages validés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "temoignages": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "id": {
+                                                        "type": "integer"
+                                                    },
+                                                    "nom": {
+                                                        "type": "string"
+                                                    },
+                                                    "email": {
+                                                        "type": "string"
+                                                    },
+                                                    "temoignage": {
+                                                        "type": "string"
+                                                    },
+                                                    "valider": {
+                                                        "type": "boolean"
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun témoignage validé trouvé"
+                    }
+                }
+            }
+        },
+        "/api/temoiniages_admin": {
+            "get": {
+                "tags": [
+                    "Témoignage"
+                ],
+                "summary": "Récupérer tous les témoignages",
+                "description": "Permet à un utilisateur authentifié de récupérer tous les témoignages.",
+                "operationId": "getAllTestimonials",
+                "responses": {
+                    "200": {
+                        "description": "Liste de tous les témoignages",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer"
+                                            },
+                                            "nom": {
+                                                "type": "string"
+                                            },
+                                            "email": {
+                                                "type": "string"
+                                            },
+                                            "temoignage": {
+                                                "type": "string"
+                                            },
+                                            "valider": {
+                                                "type": "boolean"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
                     },
                     "401": {
                         "description": "Utilisateur non authentifié"
+                    },
+                    "404": {
+                        "description": "Aucun témoignage trouvé"
                     }
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
         },
-        "/api/validerOffre/{id}": {
+        "/api/temoiniages/valider/{id}": {
             "put": {
                 "tags": [
-                    "Offres"
+                    "Témoignage"
                 ],
-                "summary": "Valider une offre par son ID",
-                "operationId": "f8cba03a17557ccfc6a395d6ce43c3d2",
+                "summary": "Valider un témoignage",
+                "description": "Permet à un utilisateur authentifié de valider un témoignage.",
+                "operationId": "validateTestimonial",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de l'offre à valider",
+                        "description": "ID du témoignage",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -521,31 +617,67 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Offre validée avec succès"
+                        "description": "Témoignage validé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        },
+                                        "temoiniage": {
+                                            "properties": {
+                                                "id": {
+                                                    "type": "integer"
+                                                },
+                                                "nom": {
+                                                    "type": "string"
+                                                },
+                                                "email": {
+                                                    "type": "string"
+                                                },
+                                                "temoignage": {
+                                                    "type": "string"
+                                                },
+                                                "valider": {
+                                                    "type": "boolean"
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié"
                     },
                     "404": {
-                        "description": "Offre non trouvée"
+                        "description": "Témoignage introuvable"
                     }
                 },
                 "security": [
                     {
-                        "sanctum": []
+                        "bearerAuth": []
                     }
                 ]
             }
         },
-        "/api/supprimerOffre/{id}": {
+        "/api/temoignageSupp/{id}": {
             "delete": {
                 "tags": [
-                    "Offres"
+                    "Témoignage"
                 ],
-                "summary": "Supprimer une offre par son ID",
-                "operationId": "cfa40483e38c84b3268a2a4c7eec3d25",
+                "summary": "Supprimer un témoignage",
+                "description": "Permet de supprimer un témoignage avec l'ID spécifié.",
+                "operationId": "deleteTestimonial",
                 "parameters": [
                     {
                         "name": "id",
                         "in": "path",
-                        "description": "ID de l'offre à supprimer",
+                        "description": "ID du témoignage",
                         "required": true,
                         "schema": {
                             "type": "integer"
@@ -554,79 +686,71 @@
                 ],
                 "responses": {
                     "200": {
-                        "description": "Offre supprimée avec succès"
+                        "description": "Témoignage supprimé avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
                     },
                     "404": {
-                        "description": "Offre non trouvée"
+                        "description": "Témoignage non trouvé"
                     }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
-        "/api/offres-departement/{id}": {
-            "put": {
+        "/api/recruteurs_acceuil": {
+            "get": {
                 "tags": [
-                    "Offres"
+                    "Recruteurs"
                 ],
-                "summary": "Modifier une offre non validée",
-                "operationId": "9fd8e5b682664ca4c6ae778910561dd8",
-                "parameters": [
-                    {
-                        "name": "id",
-                        "in": "path",
-                        "description": "ID de l'offre à modifier",
-                        "required": true,
-                        "schema": {
-                            "type": "integer"
-                        }
-                    }
-                ],
-                "requestBody": {
-                    "required": true,
-                    "content": {
-                        "application/json": {
-                            "schema": {
-                                "properties": {
-                                    "departement": {
-                                        "type": "string",
-                                        "example": "RH"
-                                    },
-                                    "poste": {
-                                        "type": "string",
-                                        "example": "Manager"
-                                    },
-                                    "description": {
-                                        "type": "string",
-                                        "example": "Gestion des équipes"
-                                    },
-                                    "dateExpiration": {
-                                        "type": "string",
-                                        "format": "date",
-                                        "example": "2025-07-01"
+                "summary": "Récupérer les recruteurs non archivés",
+                "description": "Obtenir une liste de tous les recruteurs actifs.",
+                "operationId": "e7bfb140afeaae930accf8820cb5d3fe",
+                "responses": {
+                    "200": {
+                        "description": "Liste des recruteurs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "nom_societe": {
+                                                "type": "string",
+                                                "example": "ABC Corp"
+                                            },
+                                            "image": {
+                                                "type": "string",
+                                                "example": "http://example.com/storage/images/recruiter.jpg"
+                                            },
+                                            "domaine_activite": {
+                                                "type": "string",
+                                                "example": "IT"
+                                            },
+                                            "apropos": {
+                                                "type": "string",
+                                                "example": "About the company"
+                                            },
+                                            "lien_site_web": {
+                                                "type": "string",
+                                                "example": "http://example.com"
+                                            }
+                                        },
+                                        "type": "object"
                                     }
-                                },
-                                "type": "object"
+                                }
                             }
                         }
                     }
-                },
-                "responses": {
-                    "200": {
-                        "description": "Offre modifiée avec succès"
-                    },
-                    "404": {
-                        "description": "Offre non trouvée"
-                    }
-                },
-                "security": [
-                    {
-                        "sanctum": []
-                    }
-                ]
+                }
             }
         },
         "/api/users": {
@@ -635,7 +759,7 @@
                     "Utilisateurs"
                 ],
                 "summary": "Récupérer tous les recruteurs non archivés",
-                "description": "Obtenir une liste de tous les recruteurs actifs",
+                "description": "Obtenir une liste de tous les recruteurs actifs.",
                 "operationId": "c457726701591d1183b53aa71fc13441",
                 "responses": {
                     "200": {
@@ -796,7 +920,7 @@
                     "Utilisateurs"
                 ],
                 "summary": "Récupérer tous les utilisateurs archivés",
-                "description": "Obtenir une liste de tous les utilisateurs archivés",
+                "description": "Obtenir une liste de tous les utilisateurs archivés.",
                 "operationId": "2385c880faa50e080df028ec62453459",
                 "responses": {
                     "200": {
@@ -836,6 +960,343 @@
                     }
                 }
             }
+        },
+        "/api/user/info": {
+            "get": {
+                "tags": [
+                    "Utilisateurs"
+                ],
+                "summary": "Récupérer les informations de l'utilisateur connecté",
+                "description": "Retourne les informations de l'utilisateur actuellement authentifié.",
+                "operationId": "8cc5b97acd353191d7b83864b3d96806",
+                "responses": {
+                    "200": {
+                        "description": "Informations de l'utilisateur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "nom_societe": {
+                                            "type": "string",
+                                            "example": "ABC Corp"
+                                        },
+                                        "image": {
+                                            "type": "string",
+                                            "example": "http://example.com/storage/images/user.jpg"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Non autorisé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Non authentifié"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "sanctum": []
+                    }
+                ]
+            }
+        },
+        "/api/recherche-candidat-archive": {
+            "get": {
+                "tags": [
+                    "Candidats"
+                ],
+                "summary": "Rechercher des candidats archivés",
+                "description": "Rechercher des candidats archivés en fonction du nom et du prénom.",
+                "operationId": "7540bcefa93bf13af83334f4241484eb",
+                "parameters": [
+                    {
+                        "name": "nom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Dupont"
+                        }
+                    },
+                    {
+                        "name": "prenom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Jean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des candidats archivés trouvés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Candidat"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun candidat trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun candidat trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recherche-candidat": {
+            "get": {
+                "tags": [
+                    "Candidats"
+                ],
+                "summary": "Rechercher des candidats",
+                "description": "Rechercher des candidats en fonction du nom et du prénom.",
+                "operationId": "ef240a93c9197a0917512b939a26309b",
+                "parameters": [
+                    {
+                        "name": "nom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Dupont"
+                        }
+                    },
+                    {
+                        "name": "prenom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Jean"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des candidats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Candidat"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recruteurs-archives/recherche": {
+            "get": {
+                "tags": [
+                    "Recruteurs"
+                ],
+                "summary": "Rechercher des recruteurs archivés",
+                "description": "Rechercher des recruteurs archivés par lettre.",
+                "operationId": "b6b7d250870f1a6e6f949ef0f4e4e28b",
+                "parameters": [
+                    {
+                        "name": "letter",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des recruteurs archivés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recherche-recruteur": {
+            "get": {
+                "tags": [
+                    "Recruteurs"
+                ],
+                "summary": "Rechercher des recruteurs",
+                "description": "Rechercher des recruteurs par lettre.",
+                "operationId": "e5e7589a7b22e4b8815a35de63fd0fc8",
+                "parameters": [
+                    {
+                        "name": "letter",
+                        "in": "query",
+                        "required": true,
+                        "schema": {
+                            "type": "string",
+                            "example": "A"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des recruteurs",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/User"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "Candidat": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "nom": {
+                        "type": "string",
+                        "example": "Dupont"
+                    },
+                    "prenom": {
+                        "type": "string",
+                        "example": "Jean"
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "jean.dupont@example.com"
+                    },
+                    "pays": {
+                        "type": "string",
+                        "example": "France"
+                    },
+                    "ville": {
+                        "type": "string",
+                        "example": "Paris"
+                    },
+                    "codePostal": {
+                        "type": "string",
+                        "example": "75001"
+                    },
+                    "niveauExperience": {
+                        "type": "string",
+                        "example": "Intermédiaire"
+                    },
+                    "tel": {
+                        "type": "string",
+                        "example": "0123456789"
+                    },
+                    "niveauEtude": {
+                        "type": "string",
+                        "example": "Licence"
+                    },
+                    "cv": {
+                        "type": "string",
+                        "example": "path/to/cv.pdf"
+                    },
+                    "offre_id": {
+                        "type": "integer",
+                        "example": 2
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "example": true
+                    }
+                },
+                "type": "object"
+            },
+            "User": {
+                "properties": {
+                    "id": {
+                        "type": "integer",
+                        "example": 1
+                    },
+                    "email": {
+                        "type": "string",
+                        "example": "user@example.com"
+                    },
+                    "image": {
+                        "type": "string",
+                        "example": "http://example.com/storage/images/user.jpg"
+                    },
+                    "cv": {
+                        "type": "string",
+                        "example": "http://example.com/storage/cv/user.pdf"
+                    },
+                    "role": {
+                        "type": "string",
+                        "example": "recruteur"
+                    },
+                    "archived": {
+                        "type": "boolean",
+                        "example": false
+                    },
+                    "nom_societe": {
+                        "type": "string",
+                        "example": "ABC Corp"
+                    },
+                    "domaine_activite": {
+                        "type": "string",
+                        "example": "IT"
+                    },
+                    "apropos": {
+                        "type": "string",
+                        "example": "About the company"
+                    },
+                    "lien_site_web": {
+                        "type": "string",
+                        "example": "http://example.com"
+                    }
+                },
+                "type": "object"
+            }
         }
     },
     "tags": [
@@ -852,8 +1313,20 @@
             "description": "Offres"
         },
         {
+            "name": "Témoignage",
+            "description": "Témoignage"
+        },
+        {
+            "name": "Recruteurs",
+            "description": "Recruteurs"
+        },
+        {
             "name": "Utilisateurs",
             "description": "Utilisateurs"
+        },
+        {
+            "name": "Candidats",
+            "description": "Candidats"
         }
     ]
 }

@@ -11,7 +11,8 @@ use App\Mail\RecruiterAdded;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use OpenApi\Annotations as OA;
-
+use Illuminate\Support\Str;
+use App\Models\Notification;
 
 /**
  * @OA\Info(
@@ -19,7 +20,7 @@ use OpenApi\Annotations as OA;
  *      title="API Documentation",
  *      description="Documentation de l'API pour la gestion des utilisateurs et l'authentification.",
  *      @OA\Contact(
- *          email="ranimjrad0@gmail.com"
+ *          email="sahliabderazak530@gmail.com"
  *      ),
  *      @OA\License(
  *          name="MIT",
@@ -57,7 +58,7 @@ class AuthController extends Controller
  *     @OA\Response(response=404, description="Utilisateur non trouvé")
  * )
  */
-    public function showProfile(Request $request)
+public function showProfile(Request $request)
 {
     $user = $request->user(); // Récupère l'utilisateur connecté
 
@@ -65,15 +66,16 @@ class AuthController extends Controller
         return response()->json(['error' => 'Utilisateur non trouvé.'], 404);
     }
 
-    // Vérifie si un CV existe et génère un lien public vers le fichier
+    // Récupère uniquement les champs nécessaires
     $userData = $user->only([
-        'id', 'email', 'departement', 'nom', 'prenom', 'numTel', 'poste', 'adresse', 'image'
+        'id', 'email', 'numTel', 'adresse', 'image', 'role', 'nom_societe',
+        // Nouveaux champs
+        'apropos', 'lien_site_web', 'fax', 'domaine_activite'
+        // Suppression de: 'departement', 'nom', 'prenom', 'poste', 'cv'
     ]);
 
-    // Ajoute l'URL du CV si disponible
-    $userData['cv'] = $user->cv ? asset('storage/' . $user->cv) : null;
+    // Ajoute l'URL de l'image si disponible
     $userData['image'] = $user->image ? asset('storage/' . $user->image) : null;
-
 
     return response()->json($userData, 200);
 }
@@ -196,31 +198,42 @@ public function logout(Request $request)
  */
 
 
-    public function login(Request $request)
-    {
-        $validator = Validator::make($request->all(), [
-            'email' => 'required|email',
-            'password' => 'required',
-        ]);
-
-        if ($validator->fails()) {
-            return response()->json(['error' => $validator->errors()], 400);
-        }
-
-        $user = User::where('email', $request->email)->first();
-
-        if (!$user || !Hash::check($request->password, $user->password)) {
-            return response()->json(['error' => 'Invalid credentials'], 401);
-        }
-
-        $token = $user->createToken('backendPFE')->plainTextToken;
-
-        return response()->json([
-            'message' => 'Login successful',
-            'token' => $token,
-            'user' => $user,
-        ], 200);
+ public function login(Request $request)
+ {
+     $validator = Validator::make($request->all(), [
+         'email' => 'required|email',
+         'password' => 'required',
+     ]);
+ 
+     if ($validator->fails()) {
+         return response()->json(['error' => $validator->errors()], 400);
+     }
+ 
+     $user = User::where('email', $request->email)->first();
+ 
+     // Vérification si l'utilisateur existe et si le mot de passe est correct
+     if (!$user || !Hash::check($request->password, $user->password)) {
+         return response()->json(['error' => 'Invalid credentials'], 401);
+     }
+ 
+     // Vérification si le compte est actif
+     if (!$user->active) {
+        return response()->json(['error' => 'Votre compte est inactif. Veuillez vérifier votre compte.'], 403);
     }
+ 
+     $token = $user->createToken('backendPFE')->plainTextToken;
+ 
+     return response()->json([
+         'message' => 'Login successful',
+         'token' => $token,
+         'user' => $user,
+     ], 200);
+ }
+ 
+ 
+
+
+ 
 
 /**
  * @OA\Post(
@@ -276,20 +289,22 @@ public function logout(Request $request)
  * )
  */
 
-    public function register(Request $request)
-    {
+ public function register(Request $request)
+{
     $validator = Validator::make($request->all(), [
         'email' => 'required|email|unique:users,email',
         'password' => 'required|min:8',
-        'departement' => 'required|string',
-        'nom' => 'required|string',
-        'prenom' => 'required|string',
+        // Suppression de: 'nom', 'prenom', 'departement', 'poste', 'cv'
         'numTel' => 'required|string',
-        'poste' => 'required|string',
         'adresse' => 'required|string',
         'role' => 'required|string',
         'image' => 'required|file|mimes:jpeg,png,jpg|max:2048',
-        'cv' => 'required|file|mimes:pdf|max:5120',
+        'nom_societe' => 'required|string|unique:users,nom_societe',
+        // Nouveaux champs
+        'apropos' => 'nullable|string',
+        'lien_site_web' => 'nullable|string|url',
+        'fax' => 'nullable|string',
+        'domaine_activite' => 'required|string',
     ]);
 
     if ($validator->fails()) {
@@ -298,27 +313,48 @@ public function logout(Request $request)
 
     // Stockage des fichiers
     $imagePath = $request->file('image')->store('images', 'public');
-    $cvPath = $request->file('cv')->store('cv', 'public');
+    // Suppression du stockage du CV
+
+    // Générer un code de vérification unique
+    $verificationCode = Str::random(6);
 
     // Création de l'utilisateur
     $user = User::create([
         'email' => $request->email,
         'password' => Hash::make($request->password),
-        'departement' => $request->departement,
-        'nom' => $request->nom,
-        'prenom' => $request->prenom,
+        // Suppression de: 'departement', 'nom', 'prenom', 'poste', 'cv'
         'numTel' => $request->numTel,
-        'poste' => $request->poste,
         'adresse' => $request->adresse,
         'role' => $request->role,
         'image' => $imagePath,
-        'cv' => $cvPath,
+        'nom_societe' => $request->nom_societe,
+        'active' => false,
+        'code_verification' => $verificationCode,
+        // Nouveaux champs
+        'apropos' => $request->apropos,
+        'lien_site_web' => $request->lien_site_web,
+        'fax' => $request->fax,
+        'domaine_activite' => $request->domaine_activite,
     ]);
 
-    Mail::to($user->email)->send(new RecruiterAdded($user->prenom . ' ' . $user->nom, $request->password));
+    // Envoi de l'email avec le code de vérification
+    Mail::to($user->email)->send(new RecruiterAdded($user->nom_societe, $verificationCode));
 
-
-   
+    // Créer une notification pour les admins
+    User::where('role', 'admin')->each(function ($admin) use ($user) {
+        Notification::create([
+            'type' => 'new_recruiter',
+            'message' => "Nouveau recruteur inscrit: {$user->nom_societe}",
+            'data' => [
+                'recruiter_id' => $user->id,
+                'recruiter_name' => $user->nom_societe,
+                'recruiter_email' => $user->email,
+                'company' => $user->nom_societe,
+            ],
+            'user_id' => $admin->id,
+            'read' => false,
+        ]);
+    });
 
     // Génération du token d'authentification
     $token = $user->createToken('backendPFE')->plainTextToken;
@@ -330,7 +366,58 @@ public function logout(Request $request)
     ], 201);
 }
 
-public function updateRec(Request $request)
+public function verifyCode(Request $request)
+{
+    $user = User::where('email', $request->email)->first();
+
+    if (!$user || $user->code_verification !== $request->verification_code) {
+        return response()->json(['error' => 'Code de vérification incorrect.'], 400);
+    }
+
+    // Mise à jour du statut de l'utilisateur pour activer le compte
+    $user->active = true;
+    $user->code_verification = null; // Supprimer le code après vérification
+    $user->save();
+
+    return response()->json(['message' => 'Votre compte a été activé avec succès.'], 200);
+}
+
+public function resendVerificationCodeLogin(Request $request)
+{
+    // Valider la requête
+    $validator = Validator::make($request->all(), [
+        'email' => 'required|email|exists:users,email'
+    ]);
+
+    if ($validator->fails()) {
+        return response()->json(['error' => 'Email non trouvé'], 404);
+    }
+
+    // Récupérer l'utilisateur
+    $user = User::where('email', $request->email)->first();
+
+    // Vérifier si le compte est déjà actif
+    if ($user->active) {
+        return response()->json(['error' => 'Ce compte est déjà vérifié'], 400);
+    }
+
+    // Générer un nouveau code de vérification
+    $newVerificationCode = Str::random(6);
+
+    // Mettre à jour le code de vérification de l'utilisateur
+    $user->code_verification = $newVerificationCode;
+    $user->save();
+
+    // Renvoyer l'email avec le nouveau code
+    Mail::to($user->email)->send(new RecruiterAdded($user->nom_societe, $newVerificationCode));
+
+    return response()->json(['message' => 'Un nouveau code de vérification a été envoyé'], 200);
+}
+
+
+
+
+function updateRec(Request $request)
 {
     try {
         // Récupérer l'utilisateur à partir du token
@@ -341,33 +428,32 @@ public function updateRec(Request $request)
         }
 
         // Validation des données entrantes
-        $validatedData = $request->validate([
-            'email' => 'nullable|email|unique:users,email,' . $user->id,
+        $validator = Validator::make($request->all(), [
             'password' => 'nullable|min:8',
-            'nom' => 'nullable|string',
-            'prenom' => 'nullable|string',
+            // Suppression de: 'nom', 'prenom'
             'numTel' => 'nullable|string',
             'adresse' => 'nullable|string',
             'image' => 'nullable|file|mimes:jpeg,png,jpg|max:2048',
-            'cv' => 'nullable|file|mimes:pdf|max:5120',
+            // Suppression de: 'cv'
+            // Nouveaux champs
+            'apropos' => 'nullable|string',
+            'lien_site_web' => 'nullable|string|url',
+            'fax' => 'nullable|string',
+            'domaine_activite' => 'nullable|string',
         ]);
 
-        // Mise à jour des champs texte
-        if (isset($validatedData['email'])) {
-            $user->email = $validatedData['email'];
+        if ($validator->fails()) {
+            return response()->json(['error' => $validator->errors()], 422);
         }
+
+        $validatedData = $validator->validated();
+
 
         if (isset($validatedData['password'])) {
             $user->password = Hash::make($validatedData['password']);
         }
 
-        if (isset($validatedData['nom'])) {
-            $user->nom = $validatedData['nom'];
-        }
-
-        if (isset($validatedData['prenom'])) {
-            $user->prenom = $validatedData['prenom'];
-        }
+        // Suppression des mises à jour pour 'nom' et 'prenom'
 
         if (isset($validatedData['numTel'])) {
             $user->numTel = $validatedData['numTel'];
@@ -375,6 +461,23 @@ public function updateRec(Request $request)
 
         if (isset($validatedData['adresse'])) {
             $user->adresse = $validatedData['adresse'];
+        }
+
+        // Nouveaux champs
+        if (isset($validatedData['apropos'])) {
+            $user->apropos = $validatedData['apropos'];
+        }
+
+        if (isset($validatedData['lien_site_web'])) {
+            $user->lien_site_web = $validatedData['lien_site_web'];
+        }
+
+        if (isset($validatedData['fax'])) {
+            $user->fax = $validatedData['fax'];
+        }
+
+        if (isset($validatedData['domaine_activite'])) {
+            $user->domaine_activite = $validatedData['domaine_activite'];
         }
 
         // Gérer l'upload de l'image
@@ -386,14 +489,7 @@ public function updateRec(Request $request)
             $user->image = $imagePath;
         }
 
-        // Gérer l'upload du CV
-        if ($request->hasFile('cv') && $request->file('cv')->isValid()) {
-            if ($user->cv) {
-                Storage::disk('public')->delete($user->cv);
-            }
-            $cvPath = $request->file('cv')->store('cv', 'public');
-            $user->cv = $cvPath;
-        }
+        // Suppression de la gestion du CV
 
         // Sauvegarde des modifications
         $user->save();
@@ -401,13 +497,17 @@ public function updateRec(Request $request)
         // Préparer la réponse
         $userData = [
             'id' => $user->id,
-            'email' => $user->email,
-            'nom' => $user->nom,
-            'prenom' => $user->prenom,
+            // Suppression de: 'nom', 'prenom'
+            'nom_societe' => $user->nom_societe,
             'numTel' => $user->numTel,
             'adresse' => $user->adresse,
             'image' => $user->image ? asset('storage/' . $user->image) : null,
-            'cv' => $user->cv ? asset('storage/' . $user->cv) : null,
+            // Suppression de: 'cv'
+            // Nouveaux champs
+            'apropos' => $user->apropos,
+            'lien_site_web' => $user->lien_site_web,
+            'fax' => $user->fax,
+            'domaine_activite' => $user->domaine_activite,
         ];
 
         return response()->json([
@@ -416,10 +516,78 @@ public function updateRec(Request $request)
         ], 200);
 
     } catch (\Illuminate\Validation\ValidationException $e) {
-        return response()->json(['error' => $e->errors()], 422);
-    } catch (\Exception $e) {
         return response()->json(['error' => 'Une erreur est survenue'], 500);
     }
+}
+
+
+
+
+
+
+// ✅ 1️⃣ Fonction pour envoyer un code aléatoire par email
+public function sendVerificationCode(Request $request)
+{
+    $request->validate(['email' => 'required|email']);
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['error' => 'Email non trouvé'], 404);
+    }
+
+    $code = rand(100000, 999999); // Générer un code à 6 chiffres
+    $user->update(['code_verification' => $code]);
+
+    Mail::raw("Votre code de réinitialisation est : $code", function ($message) use ($user) {
+        $message->to($user->email)
+            ->subject('Réinitialisation de mot de passe');
+    });
+
+    return response()->json(['message' => 'Code envoyé par email'], 200);
+}
+
+// ✅ 2️⃣ Fonction pour vérifier si le code est valide
+public function verifyCoderest(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'code_verification' => 'required',
+    ]);
+
+    $user = User::where('email', $request->email)
+        ->where('code_verification', $request->code_verification)
+        ->first();
+
+    if (!$user) {
+        return response()->json(['error' => 'Code incorrect ou email invalide'], 400);
+    }
+
+    return response()->json(['message' => 'Code valide'], 200);
+}
+
+// ✅ 3️⃣ Fonction pour réinitialiser le mot de passe après vérification du code
+public function resetPassword(Request $request)
+{
+    $request->validate([
+        'email' => 'required|email',
+        'new_password' => 'required|min:6',
+    ]);
+
+    $user = User::where('email', $request->email)->first();
+    if (!$user) {
+        return response()->json(['error' => 'Email non trouvé'], 404);
+    }
+
+    if (!$user->code_verification) {
+        return response()->json(['error' => 'Aucun code de vérification actif'], 400);
+    }
+
+    $user->update([
+        'password' => Hash::make($request->new_password),
+        'code_verification' => null, // Réinitialiser le code après utilisation
+    ]);
+
+    return response()->json(['message' => 'Mot de passe réinitialisé avec succès'], 200);
 }
 
 }

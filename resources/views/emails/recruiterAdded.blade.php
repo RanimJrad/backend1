@@ -6,12 +6,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Votre compte recruteur</title>
 </head>
-<body>
-    <h1>Bonjour {{ $recruiterName }},</h1>
-    <p>Votre compte recruteur a été créé avec succès.</p>
-    <p>Voici votre mot de passe temporaire : <strong>{{ $password }}</strong></p>
-    <p>Veuillez changer votre mot de passe dès que vous recevez cet e-mail.</p>
+<body style="font-family: Arial, sans-serif; line-height: 1.6;">
+    <h1 style="color: #2c3e50;">Bonjour {{ $recruiterName }},</h1>
+    <p>Voici votre code de vérification : <strong style="font-size: 20px; color: #e74c3c;">{{ $verificationCode }}</strong></p>
+    <p>Veuillez entrer ce code pour activer votre compte.</p>
     <p>Cordialement,</p>
     <p>L'équipe de recrutement.</p>
+    <p>Talent Match</p>
 </body>
 </html>

@@ -1,4 +1,5 @@
 <?php
+
 namespace App\Mail;
 
 use Illuminate\Bus\Queueable;
@@ -10,21 +11,32 @@ class RecruiterAdded extends Mailable
     use Queueable, SerializesModels;
 
     public $recruiterName;
-    public $password;
+    public $verificationCode;
 
-    public function __construct($recruiterName, $password)
+    /**
+     * Crée une nouvelle instance de message.
+     *
+     * @param string $recruiterName
+     * @param string $verificationCode
+     */
+    public function __construct($recruiterName, $verificationCode)
     {
         $this->recruiterName = $recruiterName;
-        $this->password = $password;
+        $this->verificationCode = $verificationCode;
     }
 
+    /**
+     * Construire le message à envoyer.
+     *
+     * @return $this
+     */
     public function build()
     {
-        return $this->subject('Nouvel utilisateur recruteur ajouté')
+        return $this->subject('Votre compte recruteur a été créé')
                     ->view('emails.recruiterAdded')
                     ->with([
                         'recruiterName' => $this->recruiterName,
-                        'password' => $this->password,
+                        'verificationCode' => $this->verificationCode,
                     ]);
     }
 }
