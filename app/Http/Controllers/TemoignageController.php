@@ -9,10 +9,10 @@ use App\Models\User;
 use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 
-
 class TemoignageController extends Controller
 {
-    /**
+
+        /**
  * @OA\Post(
  *     path="/api/temoiniage",
  *     summary="Ajouter un témoignage",
@@ -93,6 +93,7 @@ class TemoignageController extends Controller
             'temoignage' => $temoignage
         ], 201);
     }
+
     /**
  * @OA\Get(
  *     path="/api/temoignagesValides",
@@ -136,7 +137,6 @@ public function showTemoin()
         'temoignages' => $temoignages
     ], 200);
 }
-
 /**
  * @OA\Get(
  *     path="/api/temoiniages_admin",
@@ -180,7 +180,6 @@ public function getAllTemoiniages()
 
     return response()->json($temoiniages, Response::HTTP_OK);
 }
-
 /**
  * @OA\Put(
  *     path="/api/temoiniages/valider/{id}",
@@ -288,4 +287,6 @@ public function deleteTemoignage($id)
 
     return response()->json(['message' => 'Témoignage supprimé avec succès'], 200);
 }
+
+
 }

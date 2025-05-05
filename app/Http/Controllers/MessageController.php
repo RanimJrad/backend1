@@ -7,9 +7,53 @@ use App\Models\Message;
 use App\Events\NewMessage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+/**
+ * @OA\Components(
+ *     @OA\Schema(
+ *         schema="Message",
+ *         type="object",
+ *         @OA\Property(property="id", type="integer", example=1),
+ *         @OA\Property(property="from_user_id", type="integer", example=1),
+ *         @OA\Property(property="to_user_id", type="integer", example=2),
+ *         @OA\Property(property="content", type="string", example="Hello!"),
+ *         @OA\Property(property="created_at", type="string", format="date-time", example="2025-03-19T00:00:00Z"),
+ *         @OA\Property(property="updated_at", type="string", format="date-time", example="2025-03-19T00:00:00Z")
+ *     ),
+ *     @OA\Schema(
+ *         schema="Error",
+ *         type="object",
+ *         @OA\Property(property="error", type="string", example="Non authentifié")
+ *     )
+ * )
+ */
+
 
 class MessageController extends Controller
 {
+
+/**
+ * @OA\Get(
+ *     path="/api/contactable-users",
+ *     summary="Récupérer les utilisateurs contactables",
+ *     operationId="getContactableUsers",
+ *     tags={"Messages"},
+ *     security={{"bearerAuth":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des utilisateurs contactables",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/User")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Non authentifié",
+ *         @OA\JsonContent(ref="#/components/schemas/Error")
+ *     )
+ * )
+ */
+
     public function getContactableUsers()
     {
         if (!Auth::check()) {
@@ -52,7 +96,38 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    /**
+     * @OA\Post(
+     *     path="/api/messages",
+     *     summary="Envoyer un message",
+     *     operationId="sendMessage",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"to_user_id", "content"},
+     *             @OA\Property(property="to_user_id", type="integer", example=2),
+     *             @OA\Property(property="content", type="string", example="Hello!")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Message envoyé avec succès",
+     *         @OA\JsonContent(ref="#/components/schemas/Message")
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     ),
+     *     @OA\Response(
+     *         response=422,
+     *         description="Données invalides",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function sendMessage(Request $request)
     {
         if (!Auth::check()) {
@@ -82,7 +157,34 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/messages/{userId}",
+     *     summary="Obtenir les messages d'un utilisateur",
+     *     operationId="getMessages",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des messages",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(ref="#/components/schemas/Message")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function getMessages($userId)
     {
         if (!Auth::check()) {
@@ -106,7 +208,39 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    /**
+     * @OA\Patch(
+     *     path="/api/messages/{messageId}/read",
+     *     summary="Marquer un message comme lu",
+     *     operationId="markAsRead",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="messageId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Message marqué comme lu",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Message non trouvé",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function markAsRead($messageId)
     {
         if (!Auth::check()) {
@@ -125,7 +259,34 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+   /**
+     * @OA\Patch(
+     *     path="/api/messages/read-all/{userId}",
+     *     summary="Marquer tous les messages comme lus",
+     *     operationId="markAllAsRead",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Parameter(
+     *         name="userId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer")
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Tous les messages marqués comme lus",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="success", type="boolean", example=true)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function markAllAsRead($userId)
     {
         if (!Auth::check()) {
@@ -143,7 +304,28 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/messages/unread-counts",
+     *     summary="Obtenir le nombre de messages non lus par utilisateur",
+     *     operationId="getUnreadCounts",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Nombre de messages non lus",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="counts", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function getUnreadCounts()
     {
         if (!Auth::check()) {
@@ -162,7 +344,28 @@ class MessageController extends Controller
             return response()->json(['error' => $e->getMessage()], 500);
         }
     }
-
+    /**
+     * @OA\Get(
+     *     path="/api/messages/unread-total",
+     *     summary="Obtenir le nombre total de messages non lus",
+     *     operationId="getUnreadTotal",
+     *     tags={"Messages"},
+     *     security={{"bearerAuth":{}}},
+     *     @OA\Response(
+     *         response=200,
+     *         description="Nombre total de messages non lus",
+     *         @OA\JsonContent(
+     *             type="object",
+     *             @OA\Property(property="count", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=401,
+     *         description="Non authentifié",
+     *         @OA\JsonContent(ref="#/components/schemas/Error")
+     *     )
+     * )
+     */
     public function getUnreadTotal()
     {
         if (!Auth::check()) {

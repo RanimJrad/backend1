@@ -3,6 +3,8 @@ use App\Http\Controllers\Auth\ForgotPasswordController;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\CandidatController;
 use App\Http\Controllers\ContactController;
+use App\Http\Controllers\InterviewController;
+use App\Http\Controllers\MatchingScoreController;
 use App\Http\Controllers\MessageController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\TemoignageController;
@@ -14,6 +16,9 @@ use Laravel\Socialite\Facades\Socialite;
 use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use App\Http\Controllers\OffreController;
+use App\Http\Controllers\OffreScoreController;
+use App\Http\Controllers\OpenAIController;
+
 
 
 Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
@@ -80,7 +85,7 @@ Route::middleware('auth:sanctum')->get('/AlloffresExpiree', [OffreController::cl
 Route::middleware('auth:sanctum')->get('/offres-recruteur-valides', [OffreController::class, 'offreValideRecruteur']);
 Route::middleware('auth:sanctum')->get('/offres-expirees-societe', [OffreController::class, 'afficheOffreExpireeRec']);
 Route::middleware('auth:sanctum')->get('/recherche-offre/{poste}', [OffreController::class, 'rechercheOffre']);
-
+Route::get('/showMatchingScore/{candidat_id}', [MatchingScoreController::class, 'showMatchingScore']);
 
 
 
@@ -121,7 +126,6 @@ Route::middleware('auth:sanctum')->get('/notifications', [NotificationController
 Route::middleware('auth:sanctum')->patch('/notifications/{notification}', [NotificationController::class, 'markAsRead']);
 Route::middleware('auth:sanctum')->patch('/notifications', [NotificationController::class, 'markAllAsRead']);
 
-
 // Messages entre admin et recruteur
 Route::middleware('auth:sanctum')->get('/contactable-users', [MessageController::class, 'getContactableUsers']);
 Route::middleware('auth:sanctum')->get('/messages/{userId}', [MessageController::class, 'getMessages']);
@@ -137,3 +141,32 @@ Route::middleware('auth:sanctum')->get('/recherche-candidat-archive', action: [U
 Route::middleware('auth:sanctum')->get('/recherche-candidat', action: [UserController::class, 'rechercheCandidat']);
 Route::middleware('auth:sanctum')->get('/recherche-recruteur', action: [UserController::class, 'rechercheRecruteur']);
 Route::middleware('auth:sanctum')->get('/recruteurs-archives/recherche', [UserController::class, 'searchArchivedRecruiters']);
+
+//model ai
+use App\Http\Controllers\TestAIController;
+
+Route::post('/generate-test', [TestAIController::class, 'generateTest']);
+Route::post('/store-score', [TestAIController::class, 'storeScore']);
+Route::post('/candidat-by-email', [CandidatController::class, 'getCandidatByEmail']);
+Route::post('/generate-image-question', [TestAIController::class, 'generateImageQuestion']);
+Route::post('/analyze-personality', [TestAIController::class, 'analyzePersonality']);
+Route::post('/matching-score', [MatchingScoreController::class, 'calculateMatchingScore']);
+Route::get('/test-responses/{candidat_id}/{offre_id}', [TestAIController::class, 'getTestResponses']);
+
+//calendrie
+
+Route::post('/schedule-interview', [InterviewController::class, 'scheduleInterview'])->middleware('auth:sanctum');
+Route::get('/interviews', [InterviewController::class, 'getInterviews'])->middleware('auth:sanctum');
+Route::get('/interview/available-hours', [InterviewController::class, 'getAvailableHours'])->middleware('auth:sanctum');
+
+// Routes pour la gestion des entretiens
+Route::put('/interviews/{id}/cancel', [InterviewController::class, 'cancelInterview'])->middleware('auth:sanctum');
+Route::put('/interviews/{id}/complete', [InterviewController::class, 'completeInterview'])->middleware('auth:sanctum');
+Route::put('/interviews/{id}/reschedule', [InterviewController::class, 'rescheduleInterview'])->middleware('auth:sanctum');
+Route::get('/candidat/{id}/can-schedule', [InterviewController::class, 'canScheduleInterview'])->middleware('auth:sanctum');
+
+
+Route::post('/offre-score', [OffreScoreController::class, 'store']);
+Route::put('/update-offre-score', [OffreScoreController::class, 'update']);
+Route::post('/score-zero', [TestAIController::class, 'storeZeroScore']);
+

@@ -13,7 +13,53 @@ use Illuminate\Support\Facades\Validator;
 use OpenApi\Annotations as OA;
 class OffreController extends Controller
 {
- 
+/**
+ * @OA\Post(
+ *     path="/api/addOffres",
+ *     tags={"Offre"},
+ *     summary="Ajouter une offre",
+ *     description="Ajoute une nouvelle offre à la base de données et notifie les administrateurs.",
+ *     security={{"sanctum":{}}},
+ *     requestBody={
+ *         @OA\RequestBody(
+ *             required=true,
+ *             @OA\JsonContent(
+ *                 required={"departement", "poste", "description", "dateExpiration", "typePoste", "typeTravail", "heureTravail", "niveauExperience", "niveauEtude", "pays", "ville", "societe", "domaine", "responsabilite", "experience"},
+ *                 @OA\Property(property="departement", type="string", example="Informatique"),
+ *                 @OA\Property(property="poste", type="string", example="Développeur Web"),
+ *                 @OA\Property(property="description", type="string", example="Développeur Web pour projet entreprise."),
+ *                 @OA\Property(property="dateExpiration", type="string", format="date", example="2025-06-30"),
+ *                 @OA\Property(property="typePoste", type="string", example="CDI"),
+ *                 @OA\Property(property="typeTravail", type="string", example="Temps plein"),
+ *                 @OA\Property(property="heureTravail", type="string", example="40 heures/semaine"),
+ *                 @OA\Property(property="niveauExperience", type="string", example="2 ans"),
+ *                 @OA\Property(property="niveauEtude", type="string", example="Licence"),
+ *                 @OA\Property(property="pays", type="string", example="Tunisie"),
+ *                 @OA\Property(property="ville", type="string", example="Tunis"),
+ *                 @OA\Property(property="societe", type="string", example="TechCorp"),
+ *                 @OA\Property(property="domaine", type="string", example="Informatique"),
+ *                 @OA\Property(property="responsabilite", type="string", example="Développement de sites web."),
+ *                 @OA\Property(property="experience", type="string", example="Expérience en développement web avec React et Node.js.")
+ *             )
+ *         )
+ *     },
+ *     @OA\Response(
+ *         response=201,
+ *         description="Offre ajoutée avec succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Offre ajoutée avec succès"),
+ *             @OA\Property(property="offre", ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Erreur de validation des données",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Les données fournies sont invalides.")
+ *         )
+ *     )
+ * )
+ */ 
 public function ajoutOffre(Request $request)
 {
     $request->validate([
@@ -32,7 +78,24 @@ public function ajoutOffre(Request $request)
         'domaine' => 'required|string|max:255',
         'responsabilite' => 'required|string',
         'experience' => 'required|string',
+        'matching' => 'nullable|numeric|min:0|max:100',
+        'poids_ouverture' => 'required|numeric|min:2',
+        'poids_conscience' => 'required|numeric|min:2',
+        'poids_extraversion' => 'required|numeric|min:2',
+        'poids_agreabilite' => 'required|numeric|min:2',
+        'poids_stabilite' => 'required|numeric|min:2',
     ]);
+
+    // Vérifier que la somme des poids est égale à 15
+    $somme_poids = $request->poids_ouverture + $request->poids_conscience + 
+                   $request->poids_extraversion + $request->poids_agreabilite + 
+                   $request->poids_stabilite;
+    
+    if ($somme_poids != 15) {
+        return response()->json([
+            'error' => 'La somme des poids des traits de personnalité doit être égale à 15'
+        ], 422);
+    }
 
     $offre = Offre::create([
         'departement' => $request->departement,
@@ -52,6 +115,12 @@ public function ajoutOffre(Request $request)
         'domaine' => $request->domaine,
         'responsabilite' => $request->responsabilite,
         'experience' => $request->experience,
+        'matching' => $request->matching ?? 0,
+        'poids_ouverture' => $request->poids_ouverture,
+        'poids_conscience' => $request->poids_conscience,
+        'poids_extraversion' => $request->poids_extraversion,
+        'poids_agreabilite' => $request->poids_agreabilite,
+        'poids_stabilite' => $request->poids_stabilite,
     ]);
 
     // Get the authenticated user (recruiter)
@@ -83,8 +152,30 @@ public function ajoutOffre(Request $request)
 }
 
 
-
- 
+ /**
+ * @OA\Get(
+ *     path="/api/AlloffresValide",
+ *     tags={"Offre"},
+ *     summary="Afficher toutes les offres validées",
+ *     description="Récupère toutes les offres validées qui ne sont pas expirées.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres validées",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Erreur dans la récupération des offres",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Erreur lors de la récupération des offres.")
+ *         )
+ *     )
+ * )
+ */
     public function afficheOffreValide()
     {
         // Récupérer uniquement les offres validées
@@ -94,12 +185,28 @@ public function ajoutOffre(Request $request)
         return response()->json($offres);
     }
 
-    /**
+  /**
  * @OA\Get(
  *     path="/api/Alloffresnvalide",
- *     summary="Afficher les offres non validées et non expirées",
- *     tags={"Offres"},
- *     @OA\Response(response=200, description="Liste des offres non validées et non expirées"),
+ *     tags={"Offre"},
+ *     summary="Afficher toutes les offres non validées",
+ *     description="Récupère toutes les offres non validées qui ne sont pas expirées.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres non validées",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Erreur dans la récupération des offres",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Erreur lors de la récupération des offres.")
+ *         )
+ *     )
  * )
  */
     public function afficheOffreNValider()
@@ -111,7 +218,37 @@ public function ajoutOffre(Request $request)
 
 
 
-
+/**
+ * @OA\Get(
+ *     path="/api/offres-societe",
+ *     tags={"Offre"},
+ *     summary="Afficher les offres d'une société spécifique",
+ *     description="Récupère toutes les offres non validées pour la société de l'utilisateur connecté.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres pour la société",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Utilisateur non authentifié",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Utilisateur non authentifié")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre trouvée pour la société",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune offre trouvée pour cette société.")
+ *         )
+ *     )
+ * )
+ */
 
  public function offresParSociete() {
     // Récupérer l'utilisateur connecté
@@ -130,6 +267,45 @@ public function ajoutOffre(Request $request)
 }
 
 
+/**
+ * @OA\Put(
+ *     path="/api/validerOffre/{id}",
+ *     tags={"Offre"},
+ *     summary="Valider une offre",
+ *     description="Permet de valider une offre d'emploi. Cette opération met à jour l'état de l'offre pour la marquer comme validée.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID de l'offre à valider",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Offre validée avec succès",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Offre validée avec succès."),
+ *             @OA\Property(property="offre", ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Offre non trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Offre non trouvée.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Utilisateur non authentifié",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Utilisateur non authentifié")
+ *         )
+ *     )
+ * )
+ */
 
 
  public function validerOffre($id)
@@ -178,6 +354,44 @@ public function ajoutOffre(Request $request)
 
  
 
+/**
+ * @OA\Delete(
+ *     path="/api/supprimerOffre/{id}",
+ *     tags={"Offre"},
+ *     summary="Supprimer une offre",
+ *     description="Permet de supprimer une offre d'emploi en utilisant son ID.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID de l'offre à supprimer",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Offre supprimée avec succès",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Offre supprimée avec succès.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Offre non trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Offre non trouvée.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Utilisateur non authentifié",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Utilisateur non authentifié")
+ *         )
+ *     )
+ * )
+ */
 
     public function supprimerOffre($id)
     {
@@ -199,6 +413,74 @@ public function ajoutOffre(Request $request)
         ], 200);
     }
 
+
+/**
+ * @OA\Put(
+ *     path="/api/offres-departement/{id}",
+ *     tags={"Offre"},
+ *     summary="Modifier une offre",
+ *     description="Permet de modifier une offre d'emploi existante, sauf si elle est déjà validée.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID de l'offre à modifier",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="departement", type="string", maxLength=255),
+ *             @OA\Property(property="poste", type="string", maxLength=255),
+ *             @OA\Property(property="description", type="string"),
+ *             @OA\Property(property="dateExpiration", type="string", format="date", example="2025-12-31"),
+ *             @OA\Property(property="typePoste", type="string", maxLength=255),
+ *             @OA\Property(property="typeTravail", type="string", maxLength=255),
+ *             @OA\Property(property="heureTravail", type="string", maxLength=255),
+ *             @OA\Property(property="niveauExperience", type="string", maxLength=255),
+ *             @OA\Property(property="niveauEtude", type="string", maxLength=255),
+ *             @OA\Property(property="pays", type="string", maxLength=255),
+ *             @OA\Property(property="ville", type="string", maxLength=255),
+ *             @OA\Property(property="societe", type="string", maxLength=255),
+ *             @OA\Property(property="domaine", type="string", maxLength=255),
+ *             @OA\Property(property="responsabilite", type="string"),
+ *             @OA\Property(property="experience", type="string")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Offre modifiée avec succès",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Offre modifiée avec succès."),
+ *             @OA\Property(property="offre", type="object", ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="L'offre ne peut pas être modifiée car elle est déjà validée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Cette offre ne peut pas être modifiée car elle est déjà validée.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Offre non trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Offre non trouvée.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Erreur serveur lors de la modification de l'offre",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Une erreur est survenue lors de la modification de l'offre.")
+ *         )
+ *     )
+ * )
+ */
 
  public function modifierOffre(Request $request, $id)
  {
@@ -228,7 +510,32 @@ public function ajoutOffre(Request $request)
              'domaine' => 'nullable|string|max:255',
              'responsabilite' => 'nullable|string',
              'experience' => 'nullable|string',
+             'matching' => 'nullable|numeric|min:0|max:100',
+             'poids_ouverture' => 'nullable|numeric|min:2',
+             'poids_conscience' => 'nullable|numeric|min:2',
+             'poids_extraversion' => 'nullable|numeric|min:2',
+             'poids_agreabilite' => 'nullable|numeric|min:2',
+             'poids_stabilite' => 'nullable|numeric|min:2',
          ]);
+ 
+         // Vérifier que la somme des poids est égale à 15 si au moins un poids est fourni
+         if (isset($request->poids_ouverture) || isset($request->poids_conscience) || 
+             isset($request->poids_extraversion) || isset($request->poids_agreabilite) || 
+             isset($request->poids_stabilite)) {
+             
+             $somme_poids = 
+                 (isset($request->poids_ouverture) ? $request->poids_ouverture : $offre->poids_ouverture) + 
+                 (isset($request->poids_conscience) ? $request->poids_conscience : $offre->poids_conscience) + 
+                 (isset($request->poids_extraversion) ? $request->poids_extraversion : $offre->poids_extraversion) + 
+                 (isset($request->poids_agreabilite) ? $request->poids_agreabilite : $offre->poids_agreabilite) + 
+                 (isset($request->poids_stabilite) ? $request->poids_stabilite : $offre->poids_stabilite);
+             
+             if ($somme_poids != 15) {
+                 return response()->json([
+                     'error' => 'La somme des poids des traits de personnalité doit être égale à 15'
+                 ], 422);
+             }
+         }
  
          // Mise à jour des champs fournis par la requête
          $offre->update($validatedData);
@@ -247,6 +554,54 @@ public function ajoutOffre(Request $request)
  }
  
     
+
+/**
+ * @OA\Put(
+ *     path="/api/prolonger-offre/{id}",
+ *     tags={"Offre"},
+ *     summary="Prolonger la date d'expiration d'une offre",
+ *     description="Permet de prolonger la date d'expiration d'une offre validée, à condition que la nouvelle date soit postérieure à aujourd'hui.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         description="ID de l'offre à prolonger",
+ *         required=true,
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="dateExpiration", type="string", format="date", example="2025-12-31")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="La date d'expiration de l'offre a été prolongée avec succès",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="La date d'expiration de l'offre a été prolongée avec succès."),
+ *             @OA\Property(property="offre", type="object", ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Erreur de validation de la date d'expiration ou l'offre n'est pas validée",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="La date d'expiration doit être postérieure à aujourd'hui.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Offre non trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Offre non trouvée.")
+ *         )
+ *     )
+ * )
+ */
 
     public function prolongerOffre(Request $request, $id)
     {
@@ -291,7 +646,30 @@ public function ajoutOffre(Request $request)
 
 
 
-
+/**
+ * @OA\Get(
+ *     path="/api/AlloffresExpiree",
+ *     tags={"Offre"},
+ *     summary="Afficher les offres expirées",
+ *     description="Récupère toutes les offres dont la date d'expiration est passée.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres expirées récupérée avec succès",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre expirée trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Aucune offre expirée trouvée.")
+ *         )
+ *     )
+ * )
+ */
 public function afficheOffreExpiree()
 {
     // Récupérer uniquement les offres dont la date d'expiration est passée
@@ -303,6 +681,37 @@ public function afficheOffreExpiree()
 
 
 
+/**
+ * @OA\Get(
+ *     path="/api/offres-expirees-societe",
+ *     tags={"Offre"},
+ *     summary="Afficher les offres expirées pour la société de l'utilisateur connecté",
+ *     description="Récupère toutes les offres expirées appartenant à la société de l'utilisateur connecté.",
+ *     security={{"sanctum":{}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres expirées pour la société de l'utilisateur récupérée avec succès",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="La société de l'utilisateur n'est pas définie",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="La société de l'utilisateur n'est pas définie.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre expirée trouvée pour la société",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune offre expirée trouvée.")
+ *         )
+ *     )
+ * )
+ */
 
  public function afficheOffreExpireeRec()
  {
@@ -322,7 +731,39 @@ public function afficheOffreExpiree()
      return response()->json($offres);
  }
 
-//offre-candidat
+/**
+ * @OA\Get(
+ *     path="/api/offres-candidat",
+ *     tags={"Offre"},
+ *     summary="Afficher les offres valides et non expirées pour les candidats",
+ *     description="Récupère toutes les offres qui sont validées et dont la date d'expiration est future. Ajoute une clé 'statut' pour indiquer si l'offre est urgente ou normale.",
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres valides et non expirées avec un statut dynamique ajouté",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(
+ *                 type="object",
+ *                 @OA\Property(property="id", type="integer", example=1),
+ *                 @OA\Property(property="poste", type="string", example="Développeur web"),
+ *                 @OA\Property(property="departement", type="string", example="Informatique"),
+ *                 @OA\Property(property="societe", type="string", example="TechCorp"),
+ *                 @OA\Property(property="dateExpiration", type="string", format="date-time", example="2025-04-15T00:00:00Z"),
+ *                 @OA\Property(property="statut", type="string", example="normal"),
+ *                 @OA\Property(property="valider", type="boolean", example=true),
+ *                 @OA\Property(property="description", type="string", example="Développer des applications web...")
+ *             )
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre disponible ou expirée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Aucune offre valide disponible.")
+ *         )
+ *     )
+ * )
+ */
 
 public function afficherOffreCandidat()
 {
@@ -348,7 +789,30 @@ public function afficherOffreCandidat()
     // Retourner les offres avec la clé 'statut' dynamique
     return response()->json($offres);
 }
-
+/**
+ * @OA\Get(
+ *     path="/api/villes-domaines",
+ *     tags={"Offre"},
+ *     summary="Récupérer les villes et domaines distincts des offres validées",
+ *     description="Récupère les villes et domaines distincts des offres validées pour permettre aux candidats de filtrer les offres.",
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des villes et domaines distincts",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="villes", type="array", @OA\Items(type="string")),
+ *             @OA\Property(property="domaines", type="array", @OA\Items(type="string"))
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre validée trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Aucune offre valide disponible.")
+ *         )
+ *     )
+ * )
+ */
 public function afficheVillesEtDomainesDistincts()
 {
     $villes = Offre::where('valider', 1)->distinct()->pluck('ville');
@@ -359,6 +823,79 @@ public function afficheVillesEtDomainesDistincts()
         'domaines' => $domaines
     ]);
 }
+
+/**
+ * @OA\Get(
+ *     path="/api/offresRecherche",
+ *     tags={"Offre"},
+ *     summary="Recherche des offres d'emploi avec des filtres",
+ *     description="Permet de rechercher des offres d'emploi validées en utilisant divers filtres comme le poste, la ville, le domaine, etc.",
+ *     @OA\Parameter(
+ *         name="poste",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par poste",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="ville",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par ville",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="domaine",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par domaine",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="typePoste",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par type de poste (ex: CDI, CDD)",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="datePublication",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par date de publication",
+ *         @OA\Schema(type="string", enum={"derniere_heure", "24_heure", "derniers_7_jours"})
+ *     ),
+ *     @OA\Parameter(
+ *         name="niveauExperience",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par niveau d'expérience",
+ *         @OA\Schema(type="string", enum={"tous", "2ans", "5ans", "7ans", "+10ans", "Sans expérience"})
+ *     ),
+ *     @OA\Parameter(
+ *         name="typeTravail",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par type de travail",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres correspondant aux critères de recherche",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Paramètres de recherche invalides",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Requête mal formée.")
+ *         )
+ *     )
+ * )
+ */
 public function rechercheOffresss(Request $request) {
     // Start with a base query for validated offers
     $query = Offre::where('valider', 1);
@@ -433,7 +970,43 @@ public function rechercheOffresss(Request $request) {
 }
 
 
-
+/**
+ * @OA\Post(
+ *     path="/api/recherche-acceuil",
+ *     tags={"Offre"},
+ *     summary="Recherche des offres d'emploi par domaine et département",
+ *     description="Permet de rechercher des offres validées en fonction du domaine et du département",
+ *     @OA\Parameter(
+ *         name="domaine",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par domaine",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Parameter(
+ *         name="departement",
+ *         in="query",
+ *         required=false,
+ *         description="Filtrer les offres par département",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres correspondant aux critères de recherche",
+ *         @OA\JsonContent(
+ *             type="array",
+ *             @OA\Items(ref="#/components/schemas/Offre")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Paramètres de recherche invalides",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Requête mal formée.")
+ *         )
+ *     )
+ * )
+ */
 
 public function rechercheAcceuil(Request $request)
 {
@@ -449,7 +1022,30 @@ public function rechercheAcceuil(Request $request)
     $offres = $query->get();
     return response()->json($offres);
 }
-
+/**
+ * @OA\Get(
+ *     path="/api/departements-domaines",
+ *     tags={"Offre"},
+ *     summary="Obtenir la liste des départements et domaines distincts",
+ *     description="Retourne les départements et domaines distincts des offres validées",
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des départements et domaines distincts",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="departements", type="array", @OA\Items(type="string")),
+ *             @OA\Property(property="domaines", type="array", @OA\Items(type="string"))
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Requête mal formée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Requête mal formée.")
+ *         )
+ *     )
+ * )
+ */
 public function afficheDepartementsEtDomainesDistincts()
 {
     $departements = Offre::where('valider', 1)->distinct()->pluck('departement');
@@ -460,7 +1056,33 @@ public function afficheDepartementsEtDomainesDistincts()
         'domaines' => $domaines
     ]);
 }
-
+/**
+ * @OA\Get(
+ *     path="/api/offreDetail/{id}",
+ *     tags={"Offre"},
+ *     summary="Obtenir les détails d'une offre",
+ *     description="Retourne les détails d'une offre d'emploi spécifique en fonction de son ID",
+ *     @OA\Parameter(
+ *         name="id",
+ *         in="path",
+ *         required=true,
+ *         description="ID de l'offre",
+ *         @OA\Schema(type="integer")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Détails de l'offre retournés avec succès",
+ *         @OA\JsonContent(ref="#/components/schemas/Offre")
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Offre non trouvée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Offre non trouvée")
+ *         )
+ *     )
+ * )
+ */
 public function showDetail($id)
 {
     // Trouver l'offre par son ID
@@ -475,7 +1097,33 @@ public function showDetail($id)
     return response()->json($offre);
 }
   
-
+/**
+ * @OA\Get(
+ *     path="/api/offres_domaine/{domaine}",
+ *     tags={"Offre"},
+ *     summary="Obtenir les offres par domaine",
+ *     description="Retourne les offres d'emploi disponibles pour un domaine donné",
+ *     @OA\Parameter(
+ *         name="domaine",
+ *         in="path",
+ *         required=true,
+ *         description="Domaine des offres",
+ *         @OA\Schema(type="string")
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres retournée avec succès",
+ *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Offre"))
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre trouvée pour ce domaine",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune offre trouvée pour ce département")
+ *         )
+ *     )
+ * )
+ */
 public function getByDepartement($domaine)
 {
     // Récupérer les offres du département donné
@@ -489,7 +1137,34 @@ public function getByDepartement($domaine)
     // Retourner les offres en JSON
     return response()->json($offres);
 }
-
+/**
+ * @OA\Get(
+ *     path="/api/offres-recruteur-valides",
+ *     tags={"Offre"},
+ *     summary="Récupérer les offres validées pour un recruteur",
+ *     description="Retourne les offres validées et non expirées associées à la société du recruteur authentifié.",
+ *     security={{"bearerAuth": {}}},
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres validées et non expirées pour la société du recruteur",
+ *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Offre"))
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Aucune société associée à l'utilisateur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune société associée à cet utilisateur.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre trouvée pour la société de l'utilisateur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune offre trouvée pour cette société.")
+ *         )
+ *     )
+ * )
+ */
 public function offreValideRecruteur(Request $request)
 {
     $user = $request->user(); // Récupérer l'utilisateur authentifié
@@ -507,7 +1182,36 @@ public function offreValideRecruteur(Request $request)
 
     return response()->json($offres);
 }
-
+/**
+ * @OA\Get(
+ *     path="/api/recherche-offre/{poste}",
+ *     tags={"Offre"},
+ *     summary="Rechercher des offres par poste",
+ *     description="Retourne les offres qui correspondent à un poste donné.",
+ *     @OA\Parameter(
+ *         name="poste",
+ *         in="path",
+ *         description="Nom du poste à rechercher",
+ *         required=true,
+ *         @OA\Schema(
+ *             type="string",
+ *             example="Développeur"
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Liste des offres correspondant au poste",
+ *         @OA\JsonContent(type="array", @OA\Items(ref="#/components/schemas/Offre"))
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Aucune offre trouvée pour ce poste",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Aucune offre trouvée pour ce poste.")
+ *         )
+ *     )
+ * )
+ */
 public function rechercheOffre($poste)
 {
     return Offre::where('poste', 'like', '%' . $poste . '%')->get();

@@ -31,31 +31,33 @@ use App\Models\Notification;
 
 class AuthController extends Controller
 {
-    /**
+/**
  * @OA\Get(
- *     path="/api/profile",
- *     summary="Afficher le profil de l'utilisateur connecté",
- *     tags={"Authentification"},
- *     security={{"sanctum": {}}},
+ *     path="/api/users/profile",
+ *     summary="Afficher le profil utilisateur",
+ *     description="Récupère les informations de l'utilisateur connecté.",
+ *     tags={"Utilisateur"},
+ *     security={{"bearerAuth": {}}},
  *     @OA\Response(
  *         response=200,
- *         description="Profil utilisateur récupéré avec succès",
+ *         description="Profil utilisateur récupéré avec succès.",
  *         @OA\JsonContent(
  *             type="object",
- *             @OA\Property(property="id", type="integer"),
- *             @OA\Property(property="email", type="string"),
- *             @OA\Property(property="departement", type="string"),
- *             @OA\Property(property="nom", type="string"),
- *             @OA\Property(property="prenom", type="string"),
- *             @OA\Property(property="numTel", type="string"),
- *             @OA\Property(property="poste", type="string"),
- *             @OA\Property(property="adresse", type="string"),
- *             @OA\Property(property="image", type="string"),
- *             @OA\Property(property="cv", type="string")
+ *             @OA\Property(property="id", type="integer", example=1),
+ *             @OA\Property(property="email", type="string", example="user@example.com"),
+ *             @OA\Property(property="numTel", type="string", example="+216 12 345 678"),
+ *             @OA\Property(property="adresse", type="string", example="Rue Hbib Bourguiba, Hammamet"),
+ *             @OA\Property(property="image", type="string", nullable=true, example="https://example.com/storage/user.jpg"),
+ *             @OA\Property(property="role", type="string", example="recruteur"),
+ *             @OA\Property(property="nom_societe", type="string", example="Tech Solutions"),
+ *             @OA\Property(property="apropos", type="string", example="Entreprise spécialisée en IT"),
+ *             @OA\Property(property="lien_site_web", type="string", nullable=true, example="https://www.techsolutions.com"),
+ *             @OA\Property(property="fax", type="string", nullable=true, example="+216 71 234 567"),
+ *             @OA\Property(property="domaine_activite", type="string", example="Développement Web")
  *         )
  *     ),
- *     @OA\Response(response=401, description="Utilisateur non authentifié"),
- *     @OA\Response(response=404, description="Utilisateur non trouvé")
+ *     @OA\Response(response=401, description="Non autorisé. Token invalide ou manquant."),
+ *     @OA\Response(response=404, description="Utilisateur non trouvé.")
  * )
  */
 public function showProfile(Request $request)
@@ -83,37 +85,38 @@ public function showProfile(Request $request)
 
 /**
  * @OA\Put(
- *     path="/api/admins/{id}",
+ *     path="/api/user/update/{id}",
  *     summary="Mettre à jour le département et le poste d'un administrateur",
- *     tags={"Administrateurs"},
- *     security={{"sanctum": {}}},
+ *     description="Mise à jour des champs département et poste d'un utilisateur spécifique.",
+ *     tags={"Utilisateur"},
+ *     security={{"bearerAuth": {}}},
  *     @OA\Parameter(
  *         name="id",
  *         in="path",
  *         required=true,
- *         description="ID de l'administrateur à mettre à jour",
+ *         description="ID de l'utilisateur à mettre à jour",
  *         @OA\Schema(type="integer")
  *     ),
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
- *             required={},
- *             @OA\Property(property="departement", type="string", example="Informatique"),
- *             @OA\Property(property="poste", type="string", example="Manager")
+ *             type="object",
+ *             @OA\Property(property="departement", type="string", nullable=true, example="Informatique"),
+ *             @OA\Property(property="poste", type="string", nullable=true, example="Chef de projet")
  *         )
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Mise à jour réussie",
+ *         description="Département et poste mis à jour avec succès.",
  *         @OA\JsonContent(
+ *             type="object",
  *             @OA\Property(property="message", type="string", example="Département et poste mis à jour avec succès.")
  *         )
  *     ),
- *     @OA\Response(response=404, description="Utilisateur non trouvé"),
- *     @OA\Response(response=400, description="Erreur de validation")
+ *     @OA\Response(response=404, description="Utilisateur non trouvé."),
+ *     @OA\Response(response=422, description="Erreur de validation des données.")
  * )
  */
-
     public function updateAdmin(Request $request, $id)
 {
     // Validation des données d'entrée
@@ -145,23 +148,32 @@ public function showProfile(Request $request)
     // Retourner une réponse de succès
     return response()->json(['message' => 'Département et poste mis à jour avec succès.'], 200);
 }
+
 /**
  * @OA\Post(
  *     path="/api/logout",
  *     summary="Déconnexion de l'utilisateur",
+ *     description="Supprime le token d'accès actuel et déconnecte l'utilisateur.",
  *     tags={"Authentification"},
- *     security={{"sanctum": {}}},
+ *     security={{"bearerAuth": {}}},
  *     @OA\Response(
  *         response=200,
- *         description="Déconnexion réussie",
+ *         description="Déconnexion réussie.",
  *         @OA\JsonContent(
+ *             type="object",
  *             @OA\Property(property="message", type="string", example="Logged out successfully")
  *         )
  *     ),
- *     @OA\Response(response=401, description="Utilisateur non authentifié")
+ *     @OA\Response(
+ *         response=401,
+ *         description="Non authentifié.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Unauthenticated.")
+ *         )
+ *     )
  * )
  */
-
 
 public function logout(Request $request)
     {
@@ -173,27 +185,55 @@ public function logout(Request $request)
 /**
  * @OA\Post(
  *     path="/api/login",
- *     summary="Connexion d'un utilisateur",
+ *     summary="Connexion de l'utilisateur",
+ *     description="Authentifie un utilisateur et génère un token d'accès.",
  *     tags={"Authentification"},
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\JsonContent(
- *             required={"email", "password"},
+ *             required={"email","password"},
  *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
- *             @OA\Property(property="password", type="string", format="password", example="password123")
+ *             @OA\Property(property="password", type="string", example="password123")
  *         )
  *     ),
  *     @OA\Response(
  *         response=200,
- *         description="Connexion réussie",
+ *         description="Connexion réussie.",
  *         @OA\JsonContent(
- *             @OA\Property(property="message", type="string"),
- *             @OA\Property(property="token", type="string"),
- *             @OA\Property(property="user", type="object")
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Login successful"),
+ *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1..."),
+ *             @OA\Property(property="user", type="object",
+ *                 @OA\Property(property="id", type="integer", example=1),
+ *                 @OA\Property(property="email", type="string", example="user@example.com"),
+ *                 @OA\Property(property="role", type="string", example="admin")
+ *             )
  *         )
  *     ),
- *     @OA\Response(response=401, description="Identifiants invalides"),
- *     @OA\Response(response=400, description="Erreur de validation")
+ *     @OA\Response(
+ *         response=400,
+ *         description="Erreur de validation.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="object", example={"email": {"Le champ email est requis."}})
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Identifiants invalides.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Invalid credentials")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=403,
+ *         description="Compte inactif.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Votre compte est inactif. Veuillez vérifier votre compte.")
+ *         )
+ *     )
  * )
  */
 
@@ -232,62 +272,60 @@ public function logout(Request $request)
  
  
 
-
- 
-
 /**
  * @OA\Post(
  *     path="/api/register",
- *     summary="Enregistrer un nouvel utilisateur",
- *     description="Créer un nouvel utilisateur avec une image et un CV",
+ *     summary="Inscription d'un utilisateur",
+ *     description="Crée un compte recruteur et envoie un email de vérification.",
  *     tags={"Authentification"},
  *     @OA\RequestBody(
  *         required=true,
  *         @OA\MediaType(
  *             mediaType="multipart/form-data",
  *             @OA\Schema(
- *                 required={"email", "password", "departement", "nom", "prenom", "numTel", "poste", "adresse", "role", "image", "cv"},
- *                 @OA\Property(property="email", type="string", format="email", example="user@example.com"),
- *                 @OA\Property(property="password", type="string", format="password", example="12345678"),
- *                 @OA\Property(property="departement", type="string", example="Informatique"),
- *                 @OA\Property(property="nom", type="string", example="Doe"),
- *                 @OA\Property(property="prenom", type="string", example="John"),
- *                 @OA\Property(property="numTel", type="string", example="98765432"),
- *                 @OA\Property(property="poste", type="string", example="Développeur"),
- *                 @OA\Property(property="adresse", type="string", example="123 Rue Exemple"),
- *                 @OA\Property(property="role", type="string", example="admin"),
+ *                 required={"email","password","numTel","adresse","role","image","nom_societe","domaine_activite"},
+ *                 @OA\Property(property="email", type="string", format="email", example="recruteur@example.com"),
+ *                 @OA\Property(property="password", type="string", format="password", example="password123"),
+ *                 @OA\Property(property="numTel", type="string", example="+21612345678"),
+ *                 @OA\Property(property="adresse", type="string", example="123 Avenue de l'Entreprise, Tunis"),
+ *                 @OA\Property(property="role", type="string", example="recruteur"),
  *                 @OA\Property(property="image", type="string", format="binary"),
- *                 @OA\Property(property="cv", type="string", format="binary")
+ *                 @OA\Property(property="nom_societe", type="string", example="Tech Solutions"),
+ *                 @OA\Property(property="apropos", type="string", example="Une société innovante spécialisée en IT."),
+ *                 @OA\Property(property="lien_site_web", type="string", format="url", example="https://www.techsolutions.com"),
+ *                 @OA\Property(property="fax", type="string", example="+21671234567"),
+ *                 @OA\Property(property="domaine_activite", type="string", example="Technologie et Développement")
  *             )
  *         )
  *     ),
  *     @OA\Response(
  *         response=201,
- *         description="Inscription réussie",
+ *         description="Inscription réussie et email envoyé.",
  *         @OA\JsonContent(
+ *             type="object",
  *             @OA\Property(property="message", type="string", example="Registration successful and email sent!"),
- *             @OA\Property(property="token", type="string", example="2|somerandomtoken"),
+ *             @OA\Property(property="token", type="string", example="eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1..."),
  *             @OA\Property(property="user", type="object",
- *                 @OA\Property(property="id", type="integer", example=1),
- *                 @OA\Property(property="email", type="string", example="user@example.com"),
- *                 @OA\Property(property="nom", type="string", example="Doe"),
- *                 @OA\Property(property="prenom", type="string", example="John"),
- *                 @OA\Property(property="image", type="string", example="http://example.com/storage/images/user.jpg"),
- *                 @OA\Property(property="cv", type="string", example="http://example.com/storage/cv/user.pdf")
+ *                 @OA\Property(property="id", type="integer", example=10),
+ *                 @OA\Property(property="email", type="string", example="recruteur@example.com"),
+ *                 @OA\Property(property="nom_societe", type="string", example="Tech Solutions"),
+ *                 @OA\Property(property="role", type="string", example="recruteur"),
+ *                 @OA\Property(property="active", type="boolean", example=false)
  *             )
  *         )
  *     ),
  *     @OA\Response(
  *         response=400,
- *         description="Erreur de validation",
+ *         description="Erreur de validation.",
  *         @OA\JsonContent(
- *             @OA\Property(property="error", type="object",
- *                 @OA\AdditionalProperties(type="array", @OA\Items(type="string"))
- *             )
+ *             type="object",
+ *             @OA\Property(property="error", type="object", example={"email": {"Le champ email est requis."}})
  *         )
  *     )
  * )
  */
+
+ 
 
  public function register(Request $request)
 {
@@ -366,6 +404,39 @@ public function logout(Request $request)
     ], 201);
 }
 
+/**
+ * @OA\Post(
+ *     path="/api/verify-code",
+ *     summary="Vérification du code de confirmation",
+ *     description="Active un compte utilisateur après validation du code de vérification envoyé par email.",
+ *     tags={"Authentification"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email","verification_code"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+ *             @OA\Property(property="verification_code", type="string", example="123456")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Compte activé avec succès.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Votre compte a été activé avec succès.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Code de vérification incorrect ou utilisateur non trouvé.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Code de vérification incorrect.")
+ *         )
+ *     )
+ * )
+ */
+
 public function verifyCode(Request $request)
 {
     $user = User::where('email', $request->email)->first();
@@ -381,6 +452,45 @@ public function verifyCode(Request $request)
 
     return response()->json(['message' => 'Votre compte a été activé avec succès.'], 200);
 }
+/**
+ * @OA\Post(
+ *     path="/api/resend-verification-code",
+ *     summary="Renvoyer le code de vérification",
+ *     description="Génère et envoie un nouveau code de vérification par email si l'utilisateur n'a pas encore activé son compte.",
+ *     tags={"Authentification"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         @OA\JsonContent(
+ *             required={"email"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Un nouveau code de vérification a été envoyé.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="message", type="string", example="Un nouveau code de vérification a été envoyé.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Ce compte est déjà vérifié.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Ce compte est déjà vérifié.")
+ *         )
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Email non trouvé.",
+ *         @OA\JsonContent(
+ *             type="object",
+ *             @OA\Property(property="error", type="string", example="Email non trouvé.")
+ *         )
+ *     )
+ * )
+ */
 
 public function resendVerificationCodeLogin(Request $request)
 {
@@ -416,7 +526,72 @@ public function resendVerificationCodeLogin(Request $request)
 
 
 
-
+/**
+ * @OA\Put(
+ *     path="/api/user/updateRec/{id}",
+ *     summary="Met à jour les informations de l'utilisateur connecté",
+ *     operationId="updateRec",
+ *     tags={"Utilisateur"},
+ *     security={{"bearerAuth": {}}},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         description="Les données à mettre à jour pour l'utilisateur.",
+ *         @OA\JsonContent(
+ *             required={"numTel", "adresse"},
+ *             @OA\Property(property="password", type="string", description="Nouveau mot de passe", example="newPassword123"),
+ *             @OA\Property(property="numTel", type="string", description="Numéro de téléphone de l'utilisateur", example="123456789"),
+ *             @OA\Property(property="adresse", type="string", description="Adresse de l'utilisateur", example="123 Rue Exemple"),
+ *             @OA\Property(property="image", type="string", format="binary", description="Nouvelle image de profil"),
+ *             @OA\Property(property="apropos", type="string", description="À propos de l'utilisateur", example="Nous sommes une entreprise innovante."),
+ *             @OA\Property(property="lien_site_web", type="string", format="url", description="Lien vers le site web de l'utilisateur", example="https://www.exemple.com"),
+ *             @OA\Property(property="fax", type="string", description="Numéro de fax de l'utilisateur", example="987654321"),
+ *             @OA\Property(property="domaine_activite", type="string", description="Domaine d'activité de l'utilisateur", example="Informatique"),
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Utilisateur mis à jour avec succès",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Utilisateur mis à jour avec succès."),
+ *             @OA\Property(property="user", type="object", 
+ *                 @OA\Property(property="id", type="integer", example=1),
+ *                 @OA\Property(property="nom_societe", type="string", example="Entreprise X"),
+ *                 @OA\Property(property="numTel", type="string", example="123456789"),
+ *                 @OA\Property(property="adresse", type="string", example="123 Rue Exemple"),
+ *                 @OA\Property(property="image", type="string", example="http://example.com/storage/images/user.jpg"),
+ *                 @OA\Property(property="apropos", type="string", example="Nous sommes une entreprise innovante."),
+ *                 @OA\Property(property="lien_site_web", type="string", format="url", example="https://www.exemple.com"),
+ *                 @OA\Property(property="fax", type="string", example="987654321"),
+ *                 @OA\Property(property="domaine_activite", type="string", example="Informatique")
+ *             ),
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=401,
+ *         description="Utilisateur non authentifié.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Utilisateur non authentifié.")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Validation des données échouée",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="object", 
+ *                 @OA\Property(property="numTel", type="array", @OA\Items(type="string")),
+ *                 @OA\Property(property="adresse", type="array", @OA\Items(type="string")),
+ *             )
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=500,
+ *         description="Erreur serveur",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Une erreur est survenue")
+ *         ),
+ *     ),
+ * )
+ */
 function updateRec(Request $request)
 {
     try {
@@ -521,8 +696,43 @@ function updateRec(Request $request)
 }
 
 
-
-
+/**
+ * @OA\Post(
+ *     path="/api/forgot-password",
+ *     summary="Envoie un code de vérification par email pour la réinitialisation du mot de passe",
+ *     operationId="sendVerificationCode",
+ *     tags={"Utilisateur"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         description="L'email de l'utilisateur pour lequel envoyer le code de vérification.",
+ *         @OA\JsonContent(
+ *             required={"email"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Code envoyé avec succès.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Code envoyé par email")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Email non trouvé",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Email non trouvé")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Erreur de validation de l'email",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="L'email est requis et doit être valide.")
+ *         ),
+ *     ),
+ * )
+ */
 
 
 // ✅ 1️⃣ Fonction pour envoyer un code aléatoire par email
@@ -546,6 +756,47 @@ public function sendVerificationCode(Request $request)
     return response()->json(['message' => 'Code envoyé par email'], 200);
 }
 
+
+/**
+ * @OA\Post(
+ *     path="/api/verifyForgetCode",
+ *     summary="Vérifie le code de vérification pour réinitialiser le mot de passe",
+ *     operationId="verifyCoderest",
+ *     tags={"Utilisateur"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         description="L'email de l'utilisateur et le code de vérification à valider.",
+ *         @OA\JsonContent(
+ *             required={"email", "code_verification"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+ *             @OA\Property(property="code_verification", type="string", example="123456")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Code de vérification valide.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Code valide")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Code incorrect ou email invalide",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Code incorrect ou email invalide")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Erreur de validation de l'email ou du code",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="L'email et le code de vérification sont requis.")
+ *         ),
+ *     ),
+ * )
+ */
+
+
 // ✅ 2️⃣ Fonction pour vérifier si le code est valide
 public function verifyCoderest(Request $request)
 {
@@ -564,6 +815,51 @@ public function verifyCoderest(Request $request)
 
     return response()->json(['message' => 'Code valide'], 200);
 }
+/**
+ * @OA\Post(
+ *     path="/api/reset-password",
+ *     summary="Réinitialise le mot de passe de l'utilisateur",
+ *     operationId="resetPassword",
+ *     tags={"Utilisateur"},
+ *     @OA\RequestBody(
+ *         required=true,
+ *         description="Email de l'utilisateur et nouveau mot de passe.",
+ *         @OA\JsonContent(
+ *             required={"email", "new_password"},
+ *             @OA\Property(property="email", type="string", format="email", example="user@example.com"),
+ *             @OA\Property(property="new_password", type="string", format="password", example="new_password_123")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=200,
+ *         description="Mot de passe réinitialisé avec succès.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="message", type="string", example="Mot de passe réinitialisé avec succès")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=400,
+ *         description="Aucun code de vérification actif ou autre erreur.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Aucun code de vérification actif")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=404,
+ *         description="Email non trouvé.",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="Email non trouvé")
+ *         ),
+ *     ),
+ *     @OA\Response(
+ *         response=422,
+ *         description="Erreur de validation de l'email ou du mot de passe",
+ *         @OA\JsonContent(
+ *             @OA\Property(property="error", type="string", example="L'email et le mot de passe sont requis.")
+ *         ),
+ *     ),
+ * )
+ */
 
 // ✅ 3️⃣ Fonction pour réinitialiser le mot de passe après vérification du code
 public function resetPassword(Request $request)
