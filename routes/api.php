@@ -66,7 +66,7 @@ Route::middleware('auth:sanctum')->delete('/deleteContact/{id}',[ContactControll
 Route::middleware('auth:sanctum')->put('/markasreplied/{id}', [ContactController::class, 'markAsReplied']);
 
 //temoingage
-Route::post('/temoiniage', [TemoignageController::class, 'store']);
+Route::middleware('auth:sanctum')->post('/temoiniage', [TemoignageController::class, 'store']);
 Route::get('/temoignagesValides', [TemoignageController::class, 'showTemoin']);
 Route::middleware('auth:sanctum')->get('/temoiniages_admin', [TemoignageController::class, 'getAllTemoiniages']);
 Route::middleware('auth:sanctum')->put('temoiniages/valider/{id}', [TemoignageController::class, 'validerTemoiniage']);
@@ -170,3 +170,33 @@ Route::post('/offre-score', [OffreScoreController::class, 'store']);
 Route::put('/update-offre-score', [OffreScoreController::class, 'update']);
 Route::post('/score-zero', [TestAIController::class, 'storeZeroScore']);
 
+use App\Http\Controllers\DashboardController;
+
+Route::middleware('auth:sanctum')->group(function () {
+    // Routes pour le dashboard admin
+    Route::prefix('admin')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getAdminStats']);
+        Route::get('/candidats-par-departement', [DashboardController::class, 'getCandidatsParDepartement']);
+        Route::get('/candidats-par-mois', [DashboardController::class, 'getCandidatsParMois']);
+        Route::get('/offres-par-departement', [DashboardController::class, 'getOffresParDepartement']);
+        Route::get('/entretiens-par-statut', [DashboardController::class, 'getEntretiensParStatut']);
+        Route::get('/candidats-par-niveau', [DashboardController::class, 'getCandidatsParNiveau']);
+        
+    });
+    
+    // Routes pour le dashboard recruteur
+    Route::prefix('recruteur')->group(function () {
+        Route::get('/stats', [DashboardController::class, 'getRecruteurStats']);
+        Route::get('/mes-offres', [DashboardController::class, 'getMesOffres']);
+        Route::get('/mes-entretiens', [DashboardController::class, 'getMesEntretiens']);
+        Route::get('/candidats-par-offre', [DashboardController::class, 'getCandidatsParOffre']);
+        Route::get('/entretiens-par-jour', [DashboardController::class, 'getEntretiensParJour']);
+        Route::get('/candidats-par-departementRec', [DashboardController::class, 'getCandidatsParDepartementRec']);
+        Route::get('/candidats-par-moisRec', [DashboardController::class, 'getCandidatsParMoisRec']);
+        Route::get('/offres-par-departementRec', [DashboardController::class, 'getOffresParDepartementRec']);
+        Route::get('/entretiens-par-statutRec', [DashboardController::class, 'getEntretiensParStatutRec']);
+        Route::get('/candidats-par-niveauRec', [DashboardController::class, 'getCandidatsParNiveauRec']);
+        Route::get('/candidats-par-poste', [DashboardController::class, 'getCandidatsParPoste']);
+
+    });
+});

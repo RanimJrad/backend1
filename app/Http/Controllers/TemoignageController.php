@@ -53,46 +53,47 @@ class TemoignageController extends Controller
  *     }
  * )
  */
-    public function store(Request $request)
-    {
-        // Validation des données
-        $request->validate([
-            'nom' => 'required|string|max:255',
-            'email' => 'required|email|max:255',
-            'temoignage' => 'required|string',
+public function store(Request $request)
+{
+    $user = $request->user(); // Récupère l'utilisateur connecté
+
+    // Validation des données
+    $request->validate([
+        'temoignage' => 'required|string',
+        'rate' => 'nullable|integer|min:1|max:5',
+    ]);
+
+    // Création du témoignage
+    $temoignage = Temoignage::create([
+        'nom' => $user->nom_societe,
+        'email' => $user->email,
+        'temoignage' => $request->temoignage,
+        'valider' => false,
+        'rate' => $request->rate,
+    ]);
+
+    // Créer une notification pour les admins
+    $admins = User::where('role', 'admin')->get();
+    foreach ($admins as $admin) {
+        Notification::create([
+            'type' => 'new_testimonial',
+            'message' => "Nouveau témoignage de {$user->name} en attente de validation",
+            'data' => [
+                'testimonial_id' => $temoignage->id,
+                'name' => $temoignage->nom,
+                'email' => $temoignage->email,
+                'testimonial_preview' => substr($temoignage->temoignage, 0, 100) . (strlen($temoignage->temoignage) > 100 ? '...' : ''),
+            ],
+            'user_id' => $admin->id,
+            'read' => false,
         ]);
-    
-        // Création du témoignage avec le champ "valider" défini à false
-        $temoignage = Temoignage::create([
-            'nom' => $request->nom,
-            'email' => $request->email,
-            'temoignage' => $request->temoignage,
-            'valider' => false, // Assurer que le témoignage n'est pas validé au départ
-        ]);
-    
-        // Créer une notification pour les admins
-        $admins = User::where('role', 'admin')->get();
-        foreach ($admins as $admin) {
-            Notification::create([
-                'type' => 'new_testimonial',
-                'message' => "Nouveau témoignage de {$request->nom} en attente de validation",
-                'data' => [
-                    'testimonial_id' => $temoignage->id,
-                    'name' => $temoignage->nom,
-                    'email' => $temoignage->email,
-                    'testimonial_preview' => substr($temoignage->temoignage, 0, 100) . (strlen($temoignage->temoignage) > 100 ? '...' : ''),
-                ],
-                'user_id' => $admin->id,
-                'read' => false,
-            ]);
-        }
-    
-        // Retourner une réponse JSON
-        return response()->json([
-            'message' => 'Témoignage ajouté avec succès, en attente de validation !',
-            'temoignage' => $temoignage
-        ], 201);
     }
+
+    return response()->json([
+        'message' => 'Témoignage ajouté avec succès, en attente de validation !',
+        'temoignage' => $temoignage
+    ], 201);
+}
 
     /**
  * @OA\Get(
@@ -287,6 +288,8 @@ public function deleteTemoignage($id)
 
     return response()->json(['message' => 'Témoignage supprimé avec succès'], 200);
 }
+
+
 
 
 }

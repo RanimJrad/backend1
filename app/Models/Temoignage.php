@@ -16,5 +16,5 @@ class Temoignage extends Model
     public $timestamps = true;
 
     // Si tu veux autoriser la masse d'attributs, définis les champs remplissables
-    protected $fillable = ['nom', 'email', 'temoignage','valider'];
+    protected $fillable = ['nom', 'email', 'temoignage','valider','rate'];
 }

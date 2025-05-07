@@ -28,19 +28,19 @@ class TestAIController extends Controller
             ->where('offre_id', $request->offre_id)
             ->first();
 
-            if ($existingScore) {
-                if ($existingScore->score_total == 0) {
-                    return response()->json([
-                        'error' => 'Test bloqué : triche détectée. Vous n\'êtes pas autorisé à repasser ce test.',
-                        'score' => 0
-                    ], 403);
-                }
-            
+        if ($existingScore) {
+            if ($existingScore->score_total == 0) {
                 return response()->json([
-                    'error' => 'Vous avez déjà passé le test pour cette offre.',
-                    'score' => $existingScore->score_total
+                    'error' => 'Test bloqué : triche détectée. Vous n\'êtes pas autorisé à repasser ce test.',
+                    'score' => 0
                 ], 403);
             }
+
+            return response()->json([
+                'error' => 'Vous avez déjà passé le test pour cette offre.',
+                'score' => $existingScore->score_total
+            ], 403);
+        }
 
         // Préparer les données à envoyer à FastAPI
         $offreData = [
@@ -91,26 +91,25 @@ class TestAIController extends Controller
             'stabilite' => 'nullable|integer|min:0|max:100',
             'questions' => 'nullable|array',
             'answers' => 'nullable|array',
+            'status' => 'required|in:terminer,temps ecoule,tricher', // <-- Ajout
         ]);
 
         try {
-            // Calculer les pourcentages selon la nouvelle formule
             $traitScores = $this->calculateTraitPercentages($request->questions, $request->answers);
-
 
             $totalScore = 0;
             foreach ($request->answers as $answer) {
                 $totalScore += $answer['score'];
             }
 
-            // Enregistrer le score dans la base de données
             $score = ScoreTest::updateOrCreate(
                 [
                     'candidat_id' => $request->candidat_id,
                     'offre_id' => $request->offre_id,
                 ],
                 [
-                    'score_total' => $totalScore, 
+                    'score_total' => $totalScore,
+                    'status' => $request->status, // <-- Ajout du champ ici
                     'ouverture' => $traitScores['ouverture'],
                     'conscience' => $traitScores['conscience'],
                     'extraversion' => $traitScores['extraversion'],
@@ -119,7 +118,6 @@ class TestAIController extends Controller
                 ]
             );
 
-            // Stocker les questions et réponses dans un fichier JSON
             if ($request->has('questions') && $request->has('answers')) {
                 $this->storeTestResponses($request, $traitScores);
             }
@@ -134,38 +132,39 @@ class TestAIController extends Controller
         }
     }
 
+
     public function storeZeroScore(Request $request)
-{
-    $validated = $request->validate([
-        'candidat_id' => 'required|exists:candidats,id',
-        'offre_id' => 'required|exists:offres,id',
-    ]);
-
-    try {
-        $score = ScoreTest::updateOrCreate(
-            [
-                'candidat_id' => $request->candidat_id,
-                'offre_id' => $request->offre_id,
-            ],
-            [
-                'score_total' => 0,
-                'ouverture' => 0,
-                'conscience' => 0,
-                'extraversion' => 0,
-                'agreabilite' => 0,
-                'stabilite' => 0,
-            ]
-        );
-
-        return response()->json([
-            'message' => 'Triche détectée : score zéro enregistré',
-            'score' => $score
+    {
+        $validated = $request->validate([
+            'candidat_id' => 'required|exists:candidats,id',
+            'offre_id' => 'required|exists:offres,id',
         ]);
-    } catch (\Exception $e) {
-        \Log::error('Erreur ScoreTest (triche) : ' . $e->getMessage());
-        return response()->json(['error' => 'Erreur lors de l\'enregistrement du score de triche : ' . $e->getMessage()], 500);
+
+        try {
+            $score = ScoreTest::updateOrCreate(
+                [
+                    'candidat_id' => $request->candidat_id,
+                    'offre_id' => $request->offre_id,
+                ],
+                [
+                    'score_total' => 0,
+                    'ouverture' => 0,
+                    'conscience' => 0,
+                    'extraversion' => 0,
+                    'agreabilite' => 0,
+                    'stabilite' => 0,
+                ]
+            );
+
+            return response()->json([
+                'message' => 'Triche détectée : score zéro enregistré',
+                'score' => $score
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur ScoreTest (triche) : ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de l\'enregistrement du score de triche : ' . $e->getMessage()], 500);
+        }
     }
-}
 
 
     /**

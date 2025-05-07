@@ -15,6 +15,7 @@ class ScoreTest extends Model
         'candidat_id',
         'offre_id',
         'score_total',
+        'status',
         'ouverture',
         'conscience',
         'extraversion',
