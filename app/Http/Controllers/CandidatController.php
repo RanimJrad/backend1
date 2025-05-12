@@ -83,31 +83,31 @@ class CandidatController extends Controller
             'cv' => 'required|file|mimes:pdf,doc,docx|max:2048',
             'offre_id' => 'required|exists:offres,id',
         ]);
-    
+
         // Vérifier si le candidat a déjà postulé à cette offre avec le même email
         $existingApplication = Candidat::where('email', $request->email)
             ->where('offre_id', $request->offre_id)
             ->first();
-    
+
         if ($existingApplication) {
             return response()->json([
                 'error' => 'Vous avez déjà postulé à cette offre. Vous ne pouvez postuler qu\'une seule fois par offre.'
             ], 400);
         }
-    
+
         // Sauvegarde du CV
         if ($request->hasFile('cv')) {
             $cvPath = $request->file('cv')->store('cvs', 'public'); // Sauvegarde dans storage/app/public/cvs
         }
-    
+
         // Lire le contenu du CV
         $cvText = (new PdfParser())
             ->parseFile(public_path("storage/" . $cvPath))
             ->getText();
-    
+
         // Récupérer l'offre d'emploi
         $offre = Offre::find($request->offre_id);
-    
+
         // Appel à l'API FastAPI pour obtenir le score de matching entre le CV et l'offre
         $response = Http::post('http://127.0.0.1:8003/match-cv-offre', [
             'cv' => $cvText,
@@ -123,7 +123,7 @@ class CandidatController extends Controller
                 'ville' => $offre->ville,
             ]
         ]);
-    
+
         // Vérifier la réponse de l'API
         if (!$response->ok()) {
             return response()->json([
@@ -131,19 +131,19 @@ class CandidatController extends Controller
                 'details' => $response->body(),
             ], 500);
         }
-    
+
         // Récupérer le score de matching depuis la réponse de l'API
         $data = $response->json();
         $score = $data['score'] ?? 0;
         $scoreMinimal = $offre->matching ?? 0;
-    
+
         // Vérifier si le score est suffisant pour ajouter le candidat
         if ($score < $scoreMinimal) {
             return response()->json([
                 'error' => "Votre score de matching ($score) est inférieur au minimum requis ($scoreMinimal). Nous ne pouvons pas retenir votre candidature pour ce poste.",
             ], 403);
         }
-    
+
         // Créer le candidat dans la table Candidat
         $candidat = Candidat::create([
             'nom' => $request->nom,
@@ -158,14 +158,14 @@ class CandidatController extends Controller
             'cv' => $cvPath ?? null,
             'offre_id' => $request->offre_id,
         ]);
-    
+
         // Trouver les recruteurs de la même société pour notification
         if ($offre) {
             $recruiters = User::where('nom_societe', $offre->societe)
                 ->where('role', 'recruteur')
                 ->where('active', true)
                 ->get();
-    
+
             // Créer une notification pour chaque recruteur
             foreach ($recruiters as $recruiter) {
                 Notification::create([
@@ -186,7 +186,7 @@ class CandidatController extends Controller
                 ]);
             }
         }
-    
+
         // Retourner la réponse avec le candidat créé
         return response()->json($candidat, 201);
     }
@@ -534,6 +534,8 @@ class CandidatController extends Controller
 
         return response()->json($candidats, 200);
     }
+
+
 
     /**
      * @OA\Get(

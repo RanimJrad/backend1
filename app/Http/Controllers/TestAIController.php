@@ -29,17 +29,26 @@ class TestAIController extends Controller
             ->first();
 
         if ($existingScore) {
-            if ($existingScore->score_total == 0) {
+            // Vérifier le statut du test
+            if ($existingScore->status === 'tricher') {
                 return response()->json([
                     'error' => 'Test bloqué : triche détectée. Vous n\'êtes pas autorisé à repasser ce test.',
-                    'score' => 0
+                    'score' => 0,
+                    'status' => 'tricher'
+                ], 403);
+            } else if ($existingScore->status === 'temps ecoule') {
+                return response()->json([
+                    'error' => 'Test bloqué : temps écoulé. Vous n\'êtes pas autorisé à repasser ce test.',
+                    'score' => $existingScore->score_total,
+                    'status' => 'temps ecoule'
+                ], 403);
+            } else if ($existingScore->status === 'terminer') {
+                return response()->json([
+                    'error' => 'Vous avez déjà passé le test pour cette offre.',
+                    'score' => $existingScore->score_total,
+                    'status' => 'terminer'
                 ], 403);
             }
-
-            return response()->json([
-                'error' => 'Vous avez déjà passé le test pour cette offre.',
-                'score' => $existingScore->score_total
-            ], 403);
         }
 
         // Préparer les données à envoyer à FastAPI
@@ -80,92 +89,71 @@ class TestAIController extends Controller
     }
 
     public function storeScore(Request $request)
-    {
-        $validated = $request->validate([
-            'candidat_id' => 'required|exists:candidats,id',
-            'offre_id' => 'required|exists:offres,id',
-            'ouverture' => 'nullable|integer|min:0|max:100',
-            'conscience' => 'nullable|integer|min:0|max:100',
-            'extraversion' => 'nullable|integer|min:0|max:100',
-            'agreabilite' => 'nullable|integer|min:0|max:100',
-            'stabilite' => 'nullable|integer|min:0|max:100',
-            'questions' => 'nullable|array',
-            'answers' => 'nullable|array',
-            'status' => 'required|in:terminer,temps ecoule,tricher', // <-- Ajout
-        ]);
+{
+    $validated = $request->validate([
+        'candidat_id' => 'required|exists:candidats,id',
+        'offre_id' => 'required|exists:offres,id',
+        'ouverture' => 'nullable|integer|min:0|max:100',
+        'conscience' => 'nullable|integer|min:0|max:100',
+        'extraversion' => 'nullable|integer|min:0|max:100',
+        'agreabilite' => 'nullable|integer|min:0|max:100',
+        'stabilite' => 'nullable|integer|min:0|max:100',
+        'questions' => 'nullable|array',
+        'answers' => 'nullable|array',
+        'status' => 'required|in:terminer,temps ecoule,tricher',
+    ]);
 
-        try {
-            $traitScores = $this->calculateTraitPercentages($request->questions, $request->answers);
+    try {
+        // Vérifier si un test avec statut "temps ecoule" ou "terminer" existe déjà
+        $existingScore = ScoreTest::where('candidat_id', $request->candidat_id)
+            ->where('offre_id', $request->offre_id)
+            ->whereIn('status', ['temps ecoule', 'terminer'])
+            ->first();
 
-            $totalScore = 0;
-            foreach ($request->answers as $answer) {
-                $totalScore += $answer['score'];
-            }
-
-            $score = ScoreTest::updateOrCreate(
-                [
-                    'candidat_id' => $request->candidat_id,
-                    'offre_id' => $request->offre_id,
-                ],
-                [
-                    'score_total' => $totalScore,
-                    'status' => $request->status, // <-- Ajout du champ ici
-                    'ouverture' => $traitScores['ouverture'],
-                    'conscience' => $traitScores['conscience'],
-                    'extraversion' => $traitScores['extraversion'],
-                    'agreabilite' => $traitScores['agreabilite'],
-                    'stabilite' => $traitScores['stabilite'],
-                ]
-            );
-
-            if ($request->has('questions') && $request->has('answers')) {
-                $this->storeTestResponses($request, $traitScores);
-            }
-
+        // Si un test complété existe déjà, retourner ce score sans le modifier
+        if ($existingScore) {
             return response()->json([
-                'message' => 'Score enregistré avec succès',
-                'score' => $score
+                'message' => 'Score déjà enregistré',
+                'score' => $existingScore
             ]);
-        } catch (\Exception $e) {
-            \Log::error('Erreur ScoreTest: ' . $e->getMessage());
-            return response()->json(['error' => 'Erreur lors de l\'enregistrement du score: ' . $e->getMessage()], 500);
         }
-    }
 
+        $traitScores = $this->calculateTraitPercentages($request->questions, $request->answers);
 
-    public function storeZeroScore(Request $request)
-    {
-        $validated = $request->validate([
-            'candidat_id' => 'required|exists:candidats,id',
-            'offre_id' => 'required|exists:offres,id',
+        $totalScore = 0;
+        foreach ($request->answers as $answer) {
+            $totalScore += $answer['score'];
+        }
+
+        $score = ScoreTest::updateOrCreate(
+            [
+                'candidat_id' => $request->candidat_id,
+                'offre_id' => $request->offre_id,
+            ],
+            [
+                'score_total' => $totalScore,
+                'status' => $request->status,
+                'ouverture' => $traitScores['ouverture'],
+                'conscience' => $traitScores['conscience'],
+                'extraversion' => $traitScores['extraversion'],
+                'agreabilite' => $traitScores['agreabilite'],
+                'stabilite' => $traitScores['stabilite'],
+            ]
+        );
+
+        if ($request->has('questions') && $request->has('answers')) {
+            $this->storeTestResponses($request, $traitScores);
+        }
+
+        return response()->json([
+            'message' => 'Score enregistré avec succès',
+            'score' => $score
         ]);
-
-        try {
-            $score = ScoreTest::updateOrCreate(
-                [
-                    'candidat_id' => $request->candidat_id,
-                    'offre_id' => $request->offre_id,
-                ],
-                [
-                    'score_total' => 0,
-                    'ouverture' => 0,
-                    'conscience' => 0,
-                    'extraversion' => 0,
-                    'agreabilite' => 0,
-                    'stabilite' => 0,
-                ]
-            );
-
-            return response()->json([
-                'message' => 'Triche détectée : score zéro enregistré',
-                'score' => $score
-            ]);
-        } catch (\Exception $e) {
-            \Log::error('Erreur ScoreTest (triche) : ' . $e->getMessage());
-            return response()->json(['error' => 'Erreur lors de l\'enregistrement du score de triche : ' . $e->getMessage()], 500);
-        }
+    } catch (\Exception $e) {
+        \Log::error('Erreur ScoreTest: ' . $e->getMessage());
+        return response()->json(['error' => 'Erreur lors de l\'enregistrement du score: ' . $e->getMessage()], 500);
     }
-
+}
 
     /**
      * Calculer les pourcentages pour chaque trait selon la nouvelle formule

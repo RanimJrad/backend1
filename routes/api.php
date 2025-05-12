@@ -170,6 +170,8 @@ Route::post('/offre-score', [OffreScoreController::class, 'store']);
 Route::put('/update-offre-score', [OffreScoreController::class, 'update']);
 Route::post('/score-zero', [TestAIController::class, 'storeZeroScore']);
 
+
+
 use App\Http\Controllers\DashboardController;
 
 Route::middleware('auth:sanctum')->group(function () {
