@@ -11,8 +11,54 @@ use Smalot\PdfParser\Parser;
 use PhpOffice\PhpWord\IOFactory as WordIOFactory;
 use PhpOffice\PhpWord\Element\Text;
 use PhpOffice\PhpWord\Element\TextRun;
+
 class MatchingScoreController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/matching-score",
+     *     summary="Calcule le score de matching entre un candidat et une offre",
+     *     tags={"MatchingScore"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"candidat_id","offre_id"},
+     *             @OA\Property(property="candidat_id", type="integer", example=1),
+     *             @OA\Property(property="offre_id", type="integer", example=5)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=201,
+     *         description="Score de matching calculé et enregistré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Score de matching calculé et enregistré avec succès."),
+     *             @OA\Property(property="matching_score", type="object",
+     *                 @OA\Property(property="candidat_id", type="integer", example=1),
+     *                 @OA\Property(property="offre_id", type="integer", example=5),
+     *                 @OA\Property(property="matching_score", type="number", format="float", example=87.5),
+     *                 @OA\Property(property="evaluation", type="string", example="Bon profil, quelques écarts mineurs."),
+     *                 @OA\Property(property="points_forts", type="array", @OA\Items(type="string")),
+     *                 @OA\Property(property="ecarts", type="array", @OA\Items(type="string")),
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidat ou offre non trouvé ou fichier CV manquant",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Candidat ou offre non trouvé")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur lors du calcul du score de matching",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Erreur lors du calcul du score de matching: ...")
+     *         )
+     *     )
+     * )
+     */
+
     public function calculateMatchingScore(Request $request)
     {
         // Récupérer le candidat et l'offre depuis la base de données
@@ -76,13 +122,44 @@ class MatchingScoreController extends Controller
                 'message' => 'Score de matching calculé et enregistré avec succès.',
                 'matching_score' => $matchingScore
             ], 201);
-
         } catch (\Exception $e) {
             return response()->json([
                 'error' => 'Erreur lors du calcul du score de matching: ' . $e->getMessage()
             ], 500);
         }
     }
+    /**
+     * @OA\Get(
+     *     path="/api/matching-score/{candidat_id}",
+     *     summary="Afficher le score de matching pour un candidat",
+     *     tags={"MatchingScore"},
+     *     @OA\Parameter(
+     *         name="candidat_id",
+     *         in="path",
+     *         description="ID du candidat",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Score de matching récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="matching_score", type="number", format="float", example=85.0),
+     *             @OA\Property(property="evaluation", type="string", example="Très bon profil"),
+     *             @OA\Property(property="points_forts", type="array", @OA\Items(type="string")),
+     *             @OA\Property(property="ecarts", type="array", @OA\Items(type="string"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Score de matching non trouvé pour ce candidat",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Score de matching non trouvé pour ce candidat")
+     *         )
+     *     )
+     * )
+     */
+
     public function showMatchingScore($candidat_id)
     {
         // Récupérer le score de matching du candidat

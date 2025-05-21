@@ -13,6 +13,48 @@ use App\Models\Offre;
 
 class TestAIController extends Controller
 {
+    /**
+     * @OA\Post(
+     *     path="/api/generate-test",
+     *     summary="Générer un test de personnalité pour un candidat",
+     *     tags={"Test"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"candidat_id", "offre_id"},
+     *             @OA\Property(property="candidat_id", type="integer", example=1),
+     *             @OA\Property(property="offre_id", type="integer", example=2)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Test généré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="questions", type="array", @OA\Items(type="object"))
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=403,
+     *         description="Candidat déjà testé ou bloqué",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Test bloqué : triche détectée."),
+     *             @OA\Property(property="score", type="integer", example=0),
+     *             @OA\Property(property="status", type="string", example="tricher")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidat ou offre non trouvé",
+     *         @OA\JsonContent(@OA\Property(property="error", type="string", example="Candidat ou offre non trouvé"))
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur FastAPI ou interne",
+     *         @OA\JsonContent(@OA\Property(property="error", type="string", example="Erreur lors de l'appel à FastAPI"))
+     *     )
+     * )
+     */
+
     public function generateTest(Request $request)
     {
         // Vérifier si le candidat et l'offre existent
@@ -87,73 +129,111 @@ class TestAIController extends Controller
 
         return response()->json($response->json());
     }
+    /**
+     * @OA\Post(
+     *     path="/api/store-score",
+     *     summary="Enregistrer le score du test de personnalité",
+     *     tags={"Test"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"candidat_id", "offre_id", "status"},
+     *             @OA\Property(property="candidat_id", type="integer", example=1),
+     *             @OA\Property(property="offre_id", type="integer", example=2),
+     *             @OA\Property(property="ouverture", type="integer", example=75),
+     *             @OA\Property(property="conscience", type="integer", example=85),
+     *             @OA\Property(property="extraversion", type="integer", example=65),
+     *             @OA\Property(property="agreabilite", type="integer", example=70),
+     *             @OA\Property(property="stabilite", type="integer", example=90),
+     *             @OA\Property(property="questions", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="answers", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="status", type="string", enum={"terminer", "temps ecoule", "tricher"}, example="terminer")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Score enregistré ou déjà existant",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Score enregistré avec succès"),
+     *             @OA\Property(property="score", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur lors de l'enregistrement du score",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Erreur lors de l'enregistrement du score")
+     *         )
+     *     )
+     * )
+     */
 
     public function storeScore(Request $request)
-{
-    $validated = $request->validate([
-        'candidat_id' => 'required|exists:candidats,id',
-        'offre_id' => 'required|exists:offres,id',
-        'ouverture' => 'nullable|integer|min:0|max:100',
-        'conscience' => 'nullable|integer|min:0|max:100',
-        'extraversion' => 'nullable|integer|min:0|max:100',
-        'agreabilite' => 'nullable|integer|min:0|max:100',
-        'stabilite' => 'nullable|integer|min:0|max:100',
-        'questions' => 'nullable|array',
-        'answers' => 'nullable|array',
-        'status' => 'required|in:terminer,temps ecoule,tricher',
-    ]);
-
-    try {
-        // Vérifier si un test avec statut "temps ecoule" ou "terminer" existe déjà
-        $existingScore = ScoreTest::where('candidat_id', $request->candidat_id)
-            ->where('offre_id', $request->offre_id)
-            ->whereIn('status', ['temps ecoule', 'terminer'])
-            ->first();
-
-        // Si un test complété existe déjà, retourner ce score sans le modifier
-        if ($existingScore) {
-            return response()->json([
-                'message' => 'Score déjà enregistré',
-                'score' => $existingScore
-            ]);
-        }
-
-        $traitScores = $this->calculateTraitPercentages($request->questions, $request->answers);
-
-        $totalScore = 0;
-        foreach ($request->answers as $answer) {
-            $totalScore += $answer['score'];
-        }
-
-        $score = ScoreTest::updateOrCreate(
-            [
-                'candidat_id' => $request->candidat_id,
-                'offre_id' => $request->offre_id,
-            ],
-            [
-                'score_total' => $totalScore,
-                'status' => $request->status,
-                'ouverture' => $traitScores['ouverture'],
-                'conscience' => $traitScores['conscience'],
-                'extraversion' => $traitScores['extraversion'],
-                'agreabilite' => $traitScores['agreabilite'],
-                'stabilite' => $traitScores['stabilite'],
-            ]
-        );
-
-        if ($request->has('questions') && $request->has('answers')) {
-            $this->storeTestResponses($request, $traitScores);
-        }
-
-        return response()->json([
-            'message' => 'Score enregistré avec succès',
-            'score' => $score
+    {
+        $validated = $request->validate([
+            'candidat_id' => 'required|exists:candidats,id',
+            'offre_id' => 'required|exists:offres,id',
+            'ouverture' => 'nullable|integer|min:0|max:100',
+            'conscience' => 'nullable|integer|min:0|max:100',
+            'extraversion' => 'nullable|integer|min:0|max:100',
+            'agreabilite' => 'nullable|integer|min:0|max:100',
+            'stabilite' => 'nullable|integer|min:0|max:100',
+            'questions' => 'nullable|array',
+            'answers' => 'nullable|array',
+            'status' => 'required|in:terminer,temps ecoule,tricher',
         ]);
-    } catch (\Exception $e) {
-        \Log::error('Erreur ScoreTest: ' . $e->getMessage());
-        return response()->json(['error' => 'Erreur lors de l\'enregistrement du score: ' . $e->getMessage()], 500);
+
+        try {
+            // Vérifier si un test avec statut "temps ecoule" ou "terminer" existe déjà
+            $existingScore = ScoreTest::where('candidat_id', $request->candidat_id)
+                ->where('offre_id', $request->offre_id)
+                ->whereIn('status', ['temps ecoule', 'terminer'])
+                ->first();
+
+            // Si un test complété existe déjà, retourner ce score sans le modifier
+            if ($existingScore) {
+                return response()->json([
+                    'message' => 'Score déjà enregistré',
+                    'score' => $existingScore
+                ]);
+            }
+
+            $traitScores = $this->calculateTraitPercentages($request->questions, $request->answers);
+
+            $totalScore = 0;
+            foreach ($request->answers as $answer) {
+                $totalScore += $answer['score'];
+            }
+
+            $score = ScoreTest::updateOrCreate(
+                [
+                    'candidat_id' => $request->candidat_id,
+                    'offre_id' => $request->offre_id,
+                ],
+                [
+                    'score_total' => $totalScore,
+                    'status' => $request->status,
+                    'ouverture' => $traitScores['ouverture'],
+                    'conscience' => $traitScores['conscience'],
+                    'extraversion' => $traitScores['extraversion'],
+                    'agreabilite' => $traitScores['agreabilite'],
+                    'stabilite' => $traitScores['stabilite'],
+                ]
+            );
+
+            if ($request->has('questions') && $request->has('answers')) {
+                $this->storeTestResponses($request, $traitScores);
+            }
+
+            return response()->json([
+                'message' => 'Score enregistré avec succès',
+                'score' => $score
+            ]);
+        } catch (\Exception $e) {
+            \Log::error('Erreur ScoreTest: ' . $e->getMessage());
+            return response()->json(['error' => 'Erreur lors de l\'enregistrement du score: ' . $e->getMessage()], 500);
+        }
     }
-}
 
     /**
      * Calculer les pourcentages pour chaque trait selon la nouvelle formule
@@ -283,6 +363,48 @@ class TestAIController extends Controller
             return false;
         }
     }
+
+    /**
+     * @OA\Get(
+     *     path="/api/test-responses/{candidatId}/{offreId}",
+     *     summary="Récupérer les questions et réponses d'un test enregistré",
+     *     tags={"Test"},
+     *     @OA\Parameter(
+     *         name="candidatId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Parameter(
+     *         name="offreId",
+     *         in="path",
+     *         required=true,
+     *         @OA\Schema(type="integer", example=2)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Test récupéré avec succès",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="candidat_id", type="integer", example=1),
+     *             @OA\Property(property="offre_id", type="integer", example=2),
+     *             @OA\Property(property="questions", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="answers", type="array", @OA\Items(type="object")),
+     *             @OA\Property(property="scores", type="object")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Test non trouvé",
+     *         @OA\JsonContent(@OA\Property(property="error", type="string", example="Test non trouvé"))
+     *     ),
+     *     @OA\Response(
+     *         response=500,
+     *         description="Erreur lors de la récupération du test",
+     *         @OA\JsonContent(@OA\Property(property="error", type="string", example="Erreur lors de la récupération du test"))
+     *     )
+     * )
+     */
+
 
     /**
      * Récupérer les questions et réponses du test pour un candidat et une offre

@@ -44,4 +44,8 @@ class Candidat extends Model
     {
         return $this->belongsTo(Offre::class);
     }
+    public function scoreTest()
+{
+    return $this->hasOne(ScoreTest::class, 'candidat_id', 'id');
+}
 }

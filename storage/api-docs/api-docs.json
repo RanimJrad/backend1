@@ -1097,6 +1097,82 @@
                 }
             }
         },
+        "/api/update-password/{id}": {
+            "put": {
+                "tags": [
+                    "Utilisateur"
+                ],
+                "summary": "Mettre à jour le mot de passe",
+                "operationId": "e560c8f490a6aedc376149f3d4a63b3c",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'utilisateur",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "old_password",
+                                    "password"
+                                ],
+                                "properties": {
+                                    "old_password": {
+                                        "type": "string",
+                                        "example": "oldPassword123"
+                                    },
+                                    "password": {
+                                        "type": "string",
+                                        "example": "newPassword456"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Mot de passe mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Mot de passe mis à jour avec succès."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Utilisateur non authentifié ou non autorisé"
+                    },
+                    "422": {
+                        "description": "Validation échouée"
+                    },
+                    "500": {
+                        "description": "Erreur serveur"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
         "/api/candidatStore": {
             "post": {
                 "tags": [
@@ -1700,6 +1776,161 @@
                 }
             }
         },
+        "/api/getCandidatByEmail": {
+            "post": {
+                "tags": [
+                    "Candidat"
+                ],
+                "summary": "Récupérer un candidat par email et ID d'offre",
+                "operationId": "getCandidatByEmail",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "email",
+                                    "offre_id"
+                                ],
+                                "properties": {
+                                    "email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "johndoe@example.com"
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Candidat trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "id": {
+                                            "type": "integer",
+                                            "example": 1
+                                        },
+                                        "nom": {
+                                            "type": "string",
+                                            "example": "Doe"
+                                        },
+                                        "prenom": {
+                                            "type": "string",
+                                            "example": "John"
+                                        },
+                                        "email": {
+                                            "type": "string",
+                                            "format": "email",
+                                            "example": "johndoe@example.com"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Candidat non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Candidat non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/candidats/status/{offre_id}": {
+            "get": {
+                "tags": [
+                    "Candidat"
+                ],
+                "summary": "Récupérer les candidats par offre avec test terminé ou temps écoulé",
+                "operationId": "getCandidatsByOffreStatus",
+                "parameters": [
+                    {
+                        "name": "offre_id",
+                        "in": "path",
+                        "description": "ID de l'offre",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des candidats avec statut de test terminé ou temps écoulé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "nom": {
+                                                "type": "string",
+                                                "example": "Doe"
+                                            },
+                                            "prenom": {
+                                                "type": "string",
+                                                "example": "John"
+                                            },
+                                            "test_status": {
+                                                "type": "string",
+                                                "example": "terminer"
+                                            },
+                                            "cv": {
+                                                "type": "string",
+                                                "example": "https://example.com/storage/cvs/cv.pdf"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Offre non trouvée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Offre non trouvée"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/contacts": {
             "post": {
                 "tags": [
@@ -1932,6 +2163,1421 @@
                                         "message": {
                                             "type": "string",
                                             "example": "Contact non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/admin-stats": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Récupère les statistiques globales pour l'administrateur",
+                "operationId": "getAdminStats",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "description": "Période de filtrage : week, month, year",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "week"
+                        }
+                    },
+                    {
+                        "name": "year",
+                        "in": "query",
+                        "description": "Année pour la tendance (optionnelle)",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2024
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Statistiques récupérées avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "totalCandidats": {
+                                            "type": "integer",
+                                            "example": 150
+                                        },
+                                        "totalOffres": {
+                                            "type": "integer",
+                                            "example": 20
+                                        },
+                                        "totalEntretiens": {
+                                            "type": "integer",
+                                            "example": 50
+                                        },
+                                        "totalRecruteurs": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "candidatsTendance": {
+                                            "type": "array",
+                                            "items": {
+                                                "properties": {
+                                                    "name": {
+                                                        "type": "string",
+                                                        "example": "Lun"
+                                                    },
+                                                    "value": {
+                                                        "type": "integer",
+                                                        "example": 5
+                                                    }
+                                                },
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/candidats-par-departement": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Nombre de candidats par département",
+                "operationId": "getCandidatsParDepartement",
+                "responses": {
+                    "200": {
+                        "description": "Liste des départements avec le nombre de candidats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "departement": {
+                                                "type": "string",
+                                                "example": "IT"
+                                            },
+                                            "total": {
+                                                "type": "integer",
+                                                "example": 12
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/candidats-par-mois": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Nombre de candidats par mois",
+                "operationId": "getCandidatsParMois",
+                "responses": {
+                    "200": {
+                        "description": "Nombre de candidats regroupés par mois de l'année en cours",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Jan"
+                                            },
+                                            "Candidats": {
+                                                "type": "integer",
+                                                "example": 20
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/offres-par-departement": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Nombre d'offres par département",
+                "operationId": "getOffresParDepartement",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques des offres par département",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Finance"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 5
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/entretiens-par-statut": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Nombre d'entretiens par statut",
+                "operationId": "getEntretiensParStatut",
+                "responses": {
+                    "200": {
+                        "description": "Statut des entretiens (ex: pending, done)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "pending"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 7
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/dashboard/candidats-par-niveau": {
+            "get": {
+                "tags": [
+                    "Dashboard - Admin"
+                ],
+                "summary": "Nombre de candidats par niveau d'étude",
+                "operationId": "getCandidatsParNiveau",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats selon leur niveau d'étude",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Bac+3"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 30
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recruteur/candidats-par-departement": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par département (Recruteur)",
+                "operationId": "getCandidatsParDepartementRec",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats par département pour la société du recruteur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Marketing"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 12
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/candidats-par-mois": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par mois (Recruteur)",
+                "operationId": "getCandidatsParMoisRec",
+                "responses": {
+                    "200": {
+                        "description": "Répartition mensuelle des candidats pour la société du recruteur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Jan"
+                                            },
+                                            "Candidats": {
+                                                "type": "integer",
+                                                "example": 10
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/offres-par-departement": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre d'offres par département (Recruteur)",
+                "operationId": "getOffresParDepartementRec",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des offres par département pour la société du recruteur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "RH"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 3
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/entretiens-par-statut": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre d'entretiens par statut (Recruteur)",
+                "operationId": "getEntretiensParStatutRec",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques des entretiens en fonction de leur statut",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "pending"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 4
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/candidats-par-niveau": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par niveau d'étude (Recruteur)",
+                "operationId": "getCandidatsParNiveauRec",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats par niveau d’étude pour la société du recruteur",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Master"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 8
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/stats": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Statistiques générales du recruteur",
+                "operationId": "getRecruteurStats",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques globales (offres, entretiens, candidats...)",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "totalMesCandidats": {
+                                            "type": "integer",
+                                            "example": 25
+                                        },
+                                        "totalMesOffres": {
+                                            "type": "integer",
+                                            "example": 5
+                                        },
+                                        "totalMesEntretiens": {
+                                            "type": "integer",
+                                            "example": 10
+                                        },
+                                        "entretiensPending": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/mes-offres": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Liste des offres du recruteur avec nombre de candidats",
+                "operationId": "getMesOffres",
+                "responses": {
+                    "200": {
+                        "description": "Liste des offres de la société connectée",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 1
+                                            },
+                                            "poste": {
+                                                "type": "string",
+                                                "example": "Développeur PHP"
+                                            },
+                                            "nbrCandidat": {
+                                                "type": "integer",
+                                                "example": 10
+                                            },
+                                            "expiration": {
+                                                "type": "string",
+                                                "format": "date",
+                                                "example": "2025-12-31"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/mes-entretiens": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Prochains entretiens du recruteur",
+                "operationId": "getMesEntretiens",
+                "responses": {
+                    "200": {
+                        "description": "Entretiens à venir avec informations des candidats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "id": {
+                                                "type": "integer",
+                                                "example": 7
+                                            },
+                                            "candidat_nom": {
+                                                "type": "string",
+                                                "example": "Durand"
+                                            },
+                                            "candidat_prenom": {
+                                                "type": "string",
+                                                "example": "Luc"
+                                            },
+                                            "poste": {
+                                                "type": "string",
+                                                "example": "Designer UX"
+                                            },
+                                            "date_heure": {
+                                                "type": "string",
+                                                "format": "date-time",
+                                                "example": "2025-06-01T10:00:00"
+                                            },
+                                            "type": {
+                                                "type": "string",
+                                                "example": "visio"
+                                            },
+                                            "lien_ou_adresse": {
+                                                "type": "string",
+                                                "example": "https://meet.example.com/xyz"
+                                            },
+                                            "status": {
+                                                "type": "string",
+                                                "example": "pending"
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/candidats-par-offre": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par offre",
+                "operationId": "getCandidatsParOffre",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats par poste/offre",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Développeur"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 6
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/candidats-par-poste": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par poste",
+                "operationId": "getCandidatsParPoste",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats par intitulé de poste",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Data Analyst"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 4
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/entretiens-par-jour": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre d'entretiens par jour de la semaine",
+                "operationId": "getEntretiensParJour",
+                "responses": {
+                    "200": {
+                        "description": "Statistiques des entretiens planifiés pour la semaine courante",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Lun"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 2
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/stats-chart": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Graphiques de tendances du recruteur (candidats et offres)",
+                "operationId": "getRecruteurStatsChart",
+                "parameters": [
+                    {
+                        "name": "period",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "month"
+                        }
+                    },
+                    {
+                        "name": "annee",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "integer",
+                            "example": 2025
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Tendances des offres et des candidats",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "totalCandidats": {
+                                            "type": "integer",
+                                            "example": 100
+                                        },
+                                        "totalOffres": {
+                                            "type": "integer",
+                                            "example": 8
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/recruteur/candidats-par-experience": {
+            "get": {
+                "tags": [
+                    "Dashboard - Recruteur"
+                ],
+                "summary": "Nombre de candidats par niveau d'expérience",
+                "operationId": "getCandidatsParNiveauExpRec",
+                "responses": {
+                    "200": {
+                        "description": "Répartition des candidats selon leur niveau d’expérience",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "properties": {
+                                            "name": {
+                                                "type": "string",
+                                                "example": "Junior"
+                                            },
+                                            "value": {
+                                                "type": "integer",
+                                                "example": 9
+                                            }
+                                        },
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/schedule": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Planifie un entretien ou reprogramme s'il est annulé",
+                "operationId": "scheduleInterview",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "candidat_id",
+                                    "offre_id",
+                                    "date_heure",
+                                    "candidat_email",
+                                    "candidat_nom",
+                                    "candidat_prenom",
+                                    "poste",
+                                    "type"
+                                ],
+                                "properties": {
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "date_heure": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-06-01T10:00:00"
+                                    },
+                                    "candidat_email": {
+                                        "type": "string",
+                                        "format": "email",
+                                        "example": "test@exemple.com"
+                                    },
+                                    "candidat_nom": {
+                                        "type": "string",
+                                        "example": "Dupont"
+                                    },
+                                    "candidat_prenom": {
+                                        "type": "string",
+                                        "example": "Jean"
+                                    },
+                                    "poste": {
+                                        "type": "string",
+                                        "example": "Développeur Web"
+                                    },
+                                    "type": {
+                                        "type": "string",
+                                        "enum": [
+                                            "en ligne",
+                                            "présentiel"
+                                        ],
+                                        "example": "en ligne"
+                                    },
+                                    "lien_ou_adresse": {
+                                        "type": "string",
+                                        "example": "https://meet.example.com"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Entretien planifié avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Entretien planifié avec succès"
+                                        },
+                                        "interview": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "409": {
+                        "description": "Conflit : entretien déjà existant"
+                    },
+                    "500": {
+                        "description": "Erreur interne"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews": {
+            "get": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Liste des entretiens du recruteur connecté",
+                "operationId": "getInterviews",
+                "responses": {
+                    "200": {
+                        "description": "Liste des entretiens",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "type": "object"
+                                    }
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/available-hours": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Retourne les créneaux horaires disponibles pour une date donnée",
+                "operationId": "getAvailableHours",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "date",
+                                    "offre_id"
+                                ],
+                                "properties": {
+                                    "date": {
+                                        "type": "string",
+                                        "format": "date",
+                                        "example": "2025-06-01"
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Créneaux disponibles retournés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "date": {
+                                            "type": "string",
+                                            "example": "2025-06-01"
+                                        },
+                                        "offre_id": {
+                                            "type": "integer",
+                                            "example": 2
+                                        },
+                                        "available_hours": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string",
+                                                "example": "10:00"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/{id}/cancel": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Annule un entretien donné",
+                "operationId": "cancelInterview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entretien à annuler",
+                        "required": true,
+                        "schema": {
+                            "type": "integer"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Entretien annulé avec succès"
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    },
+                    "500": {
+                        "description": "Erreur interne"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/{id}/complete": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Marque un entretien comme terminé",
+                "operationId": "completeInterview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entretien",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Entretien marqué comme terminé"
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    },
+                    "500": {
+                        "description": "Erreur interne"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/{id}/reschedule": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Replanifie un entretien avec une nouvelle date",
+                "operationId": "rescheduleInterview",
+                "parameters": [
+                    {
+                        "name": "id",
+                        "in": "path",
+                        "description": "ID de l'entretien à replanifier",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 3
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "date_heure"
+                                ],
+                                "properties": {
+                                    "date_heure": {
+                                        "type": "string",
+                                        "format": "date-time",
+                                        "example": "2025-06-02T15:30:00"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Entretien replanifié avec succès"
+                    },
+                    "403": {
+                        "description": "Non autorisé"
+                    },
+                    "500": {
+                        "description": "Erreur interne"
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/can-schedule/{idCandidat}": {
+            "get": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Vérifie si un entretien peut être planifié pour un candidat",
+                "operationId": "canScheduleInterview",
+                "parameters": [
+                    {
+                        "name": "idCandidat",
+                        "in": "path",
+                        "description": "ID du candidat",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 5
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Résultat de la vérification",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "can_schedule": {
+                                            "type": "boolean",
+                                            "example": true
+                                        },
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Ce candidat peut passer un entretien."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/interviews/envoyer-notifications": {
+            "post": {
+                "tags": [
+                    "Entretiens"
+                ],
+                "summary": "Envoie des notifications pour les entretiens proches",
+                "operationId": "envoyerNotificationEntretiens",
+                "responses": {
+                    "200": {
+                        "description": "Notifications envoyées",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Notifications envoyées avec succès."
+                                        },
+                                        "entretiens_notifiés": {
+                                            "type": "integer",
+                                            "example": 3
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                },
+                "security": [
+                    {
+                        "bearerAuth": []
+                    }
+                ]
+            }
+        },
+        "/api/matching-score": {
+            "post": {
+                "tags": [
+                    "MatchingScore"
+                ],
+                "summary": "Calcule le score de matching entre un candidat et une offre",
+                "operationId": "7f58d3883263a959002ea3c401dfdd7b",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "candidat_id",
+                                    "offre_id"
+                                ],
+                                "properties": {
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "201": {
+                        "description": "Score de matching calculé et enregistré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score de matching calculé et enregistré avec succès."
+                                        },
+                                        "matching_score": {
+                                            "properties": {
+                                                "candidat_id": {
+                                                    "type": "integer",
+                                                    "example": 1
+                                                },
+                                                "offre_id": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                },
+                                                "matching_score": {
+                                                    "type": "number",
+                                                    "format": "float",
+                                                    "example": 87.5
+                                                },
+                                                "evaluation": {
+                                                    "type": "string",
+                                                    "example": "Bon profil, quelques écarts mineurs."
+                                                },
+                                                "points_forts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                },
+                                                "ecarts": {
+                                                    "type": "array",
+                                                    "items": {
+                                                        "type": "string"
+                                                    }
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Candidat ou offre non trouvé ou fichier CV manquant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Candidat ou offre non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors du calcul du score de matching",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Erreur lors du calcul du score de matching: ..."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/matching-score/{candidat_id}": {
+            "get": {
+                "tags": [
+                    "MatchingScore"
+                ],
+                "summary": "Afficher le score de matching pour un candidat",
+                "operationId": "84f59e849567e89367a4a3509ceec525",
+                "parameters": [
+                    {
+                        "name": "candidat_id",
+                        "in": "path",
+                        "description": "ID du candidat",
+                        "required": true,
+                        "schema": {
+                            "type": "integer",
+                            "example": 1
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Score de matching récupéré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "matching_score": {
+                                            "type": "number",
+                                            "format": "float",
+                                            "example": 85
+                                        },
+                                        "evaluation": {
+                                            "type": "string",
+                                            "example": "Très bon profil"
+                                        },
+                                        "points_forts": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        },
+                                        "ecarts": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "string"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Score de matching non trouvé pour ce candidat",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Score de matching non trouvé pour ce candidat"
                                         }
                                     },
                                     "type": "object"
@@ -3856,6 +5502,192 @@
                 }
             }
         },
+        "/api/offre-score": {
+            "put": {
+                "tags": [
+                    "OffreScore"
+                ],
+                "summary": "Mettre à jour un score existant pour une offre par un candidat",
+                "operationId": "378cc30389c79da8143ae6c3c310bb72",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "offre_id",
+                                    "candidat_id",
+                                    "score"
+                                ],
+                                "properties": {
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "score": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 5
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Score mis à jour avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score mis à jour avec succès."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "offre_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "candidat_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "score": {
+                                                    "type": "integer",
+                                                    "example": 5
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Score non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score non trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            },
+            "post": {
+                "tags": [
+                    "OffreScore"
+                ],
+                "summary": "Enregistrer un score pour une offre par un candidat",
+                "operationId": "9bfdde91bf84160d556ae4d72d698eed",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "offre_id",
+                                    "candidat_id",
+                                    "score"
+                                ],
+                                "properties": {
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 10
+                                    },
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 3
+                                    },
+                                    "score": {
+                                        "type": "integer",
+                                        "maximum": 5,
+                                        "minimum": 1,
+                                        "example": 4
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Score enregistré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score enregistré avec succès."
+                                        },
+                                        "data": {
+                                            "properties": {
+                                                "offre_id": {
+                                                    "type": "integer",
+                                                    "example": 10
+                                                },
+                                                "candidat_id": {
+                                                    "type": "integer",
+                                                    "example": 3
+                                                },
+                                                "score": {
+                                                    "type": "integer",
+                                                    "example": 4
+                                                }
+                                            },
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Score déjà enregistré",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score déjà enregistré."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "422": {
+                        "description": "Erreur de validation"
+                    }
+                }
+            }
+        },
         "/api/temoiniage": {
             "post": {
                 "tags": [
@@ -4149,6 +5981,227 @@
                 }
             }
         },
+        "/api/generate-test": {
+            "post": {
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Générer un test de personnalité pour un candidat",
+                "operationId": "f0b9af1547ec33f89a541533913adf50",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "candidat_id",
+                                    "offre_id"
+                                ],
+                                "properties": {
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Test généré avec succès",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "questions": {
+                                            "type": "array",
+                                            "items": {
+                                                "type": "object"
+                                            }
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "403": {
+                        "description": "Candidat déjà testé ou bloqué",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Test bloqué : triche détectée."
+                                        },
+                                        "score": {
+                                            "type": "integer",
+                                            "example": 0
+                                        },
+                                        "status": {
+                                            "type": "string",
+                                            "example": "tricher"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Candidat ou offre non trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Candidat ou offre non trouvé"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur FastAPI ou interne",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Erreur lors de l'appel à FastAPI"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/store-score": {
+            "post": {
+                "tags": [
+                    "Test"
+                ],
+                "summary": "Enregistrer le score du test de personnalité",
+                "operationId": "e96fcb7a67bc46a06c5302dc19b3a7b2",
+                "requestBody": {
+                    "required": true,
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "required": [
+                                    "candidat_id",
+                                    "offre_id",
+                                    "status"
+                                ],
+                                "properties": {
+                                    "candidat_id": {
+                                        "type": "integer",
+                                        "example": 1
+                                    },
+                                    "offre_id": {
+                                        "type": "integer",
+                                        "example": 2
+                                    },
+                                    "ouverture": {
+                                        "type": "integer",
+                                        "example": 75
+                                    },
+                                    "conscience": {
+                                        "type": "integer",
+                                        "example": 85
+                                    },
+                                    "extraversion": {
+                                        "type": "integer",
+                                        "example": 65
+                                    },
+                                    "agreabilite": {
+                                        "type": "integer",
+                                        "example": 70
+                                    },
+                                    "stabilite": {
+                                        "type": "integer",
+                                        "example": 90
+                                    },
+                                    "questions": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "answers": {
+                                        "type": "array",
+                                        "items": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "status": {
+                                        "type": "string",
+                                        "enum": [
+                                            "terminer",
+                                            "temps ecoule",
+                                            "tricher"
+                                        ],
+                                        "example": "terminer"
+                                    }
+                                },
+                                "type": "object"
+                            }
+                        }
+                    }
+                },
+                "responses": {
+                    "200": {
+                        "description": "Score enregistré ou déjà existant",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Score enregistré avec succès"
+                                        },
+                                        "score": {
+                                            "type": "object"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    },
+                    "500": {
+                        "description": "Erreur lors de l'enregistrement du score",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "error": {
+                                            "type": "string",
+                                            "example": "Erreur lors de l'enregistrement du score"
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
         "/api/recruteurs_acceuil": {
             "get": {
                 "tags": [
@@ -4199,7 +6252,7 @@
         "/api/users": {
             "get": {
                 "tags": [
-                    "Utilisateurs"
+                    "Utilisateur"
                 ],
                 "summary": "Récupérer tous les recruteurs non archivés",
                 "description": "Obtenir une liste de tous les recruteurs actifs.",
@@ -4250,7 +6303,7 @@
         "/api/users/unarchive/{id}": {
             "put": {
                 "tags": [
-                    "Utilisateurs"
+                    "Utilisateur"
                 ],
                 "summary": "Désarchiver un utilisateur",
                 "description": "Désarchiver un utilisateur par son ID",
@@ -4305,7 +6358,7 @@
         "/api/users/archive/{id}": {
             "put": {
                 "tags": [
-                    "Utilisateurs"
+                    "Utilisateur"
                 ],
                 "summary": "Archiver un utilisateur",
                 "description": "Archiver un utilisateur par son ID",
@@ -4360,7 +6413,7 @@
         "/api/users/archived": {
             "get": {
                 "tags": [
-                    "Utilisateurs"
+                    "Utilisateur"
                 ],
                 "summary": "Récupérer tous les utilisateurs archivés",
                 "description": "Obtenir une liste de tous les utilisateurs archivés.",
@@ -4407,7 +6460,7 @@
         "/api/user/info": {
             "get": {
                 "tags": [
-                    "Utilisateurs"
+                    "Utilisateur"
                 ],
                 "summary": "Récupérer les informations de l'utilisateur connecté",
                 "description": "Retourne les informations de l'utilisateur actuellement authentifié.",
@@ -4460,7 +6513,7 @@
         "/api/recherche-candidat-archive": {
             "get": {
                 "tags": [
-                    "Candidats"
+                    "Candidat"
                 ],
                 "summary": "Rechercher des candidats archivés",
                 "description": "Rechercher des candidats archivés en fonction du nom et du prénom.",
@@ -4488,6 +6541,67 @@
                 "responses": {
                     "200": {
                         "description": "Liste des candidats archivés trouvés",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "type": "array",
+                                    "items": {
+                                        "$ref": "#/components/schemas/Candidat"
+                                    }
+                                }
+                            }
+                        }
+                    },
+                    "404": {
+                        "description": "Aucun candidat trouvé",
+                        "content": {
+                            "application/json": {
+                                "schema": {
+                                    "properties": {
+                                        "message": {
+                                            "type": "string",
+                                            "example": "Aucun candidat trouvé."
+                                        }
+                                    },
+                                    "type": "object"
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        },
+        "/api/recherche-candidats": {
+            "get": {
+                "tags": [
+                    "Candidat"
+                ],
+                "summary": "Rechercher des candidats non archivés",
+                "description": "Recherche des candidats non archivés selon le nom et/ou prénom.",
+                "operationId": "2e27a0934edd40c71315f1c0f56f2ff4",
+                "parameters": [
+                    {
+                        "name": "nom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Martin"
+                        }
+                    },
+                    {
+                        "name": "prenom",
+                        "in": "query",
+                        "required": false,
+                        "schema": {
+                            "type": "string",
+                            "example": "Paul"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Liste des candidats trouvés",
                         "content": {
                             "application/json": {
                                 "schema": {
@@ -4906,6 +7020,22 @@
             "description": "Contact"
         },
         {
+            "name": "Dashboard - Admin",
+            "description": "Dashboard - Admin"
+        },
+        {
+            "name": "Dashboard - Recruteur",
+            "description": "Dashboard - Recruteur"
+        },
+        {
+            "name": "Entretiens",
+            "description": "Entretiens"
+        },
+        {
+            "name": "MatchingScore",
+            "description": "MatchingScore"
+        },
+        {
             "name": "Messages",
             "description": "Messages"
         },
@@ -4918,20 +7048,20 @@
             "description": "Offre"
         },
         {
+            "name": "OffreScore",
+            "description": "OffreScore"
+        },
+        {
             "name": "Témoignage",
             "description": "Témoignage"
         },
         {
+            "name": "Test",
+            "description": "Test"
+        },
+        {
             "name": "Recruteurs",
             "description": "Recruteurs"
-        },
-        {
-            "name": "Utilisateurs",
-            "description": "Utilisateurs"
-        },
-        {
-            "name": "Candidats",
-            "description": "Candidats"
         }
     ]
 }

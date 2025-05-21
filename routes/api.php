@@ -170,6 +170,9 @@ Route::post('/offre-score', [OffreScoreController::class, 'store']);
 Route::put('/update-offre-score', [OffreScoreController::class, 'update']);
 Route::post('/score-zero', [TestAIController::class, 'storeZeroScore']);
 
+Route::middleware('auth:sanctum')->get('/candidatsByOffreStatus/{offre_id}', [CandidatController::class, 'getCandidatsByOffreStatus']);
+Route::middleware('auth:sanctum')->put('/user/updatePassword/{id}', [AuthController::class, 'updatePassword']);
+
 
 
 use App\Http\Controllers\DashboardController;
@@ -186,7 +189,6 @@ Route::middleware('auth:sanctum')->group(function () {
         
     });
     
-    // Routes pour le dashboard recruteur
     Route::prefix('recruteur')->group(function () {
         Route::get('/stats', [DashboardController::class, 'getRecruteurStats']);
         Route::get('/mes-offres', [DashboardController::class, 'getMesOffres']);
@@ -198,7 +200,10 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/offres-par-departementRec', [DashboardController::class, 'getOffresParDepartementRec']);
         Route::get('/entretiens-par-statutRec', [DashboardController::class, 'getEntretiensParStatutRec']);
         Route::get('/candidats-par-niveauRec', [DashboardController::class, 'getCandidatsParNiveauRec']);
+        Route::get('/candidats-par-niveauExpRec', [DashboardController::class, 'getCandidatsParNiveauExpRec']);
         Route::get('/candidats-par-poste', [DashboardController::class, 'getCandidatsParPoste']);
+        Route::get('/stats-chart', [DashboardController::class, 'getRecruteurStatsChart']);
 
     });
+
 });

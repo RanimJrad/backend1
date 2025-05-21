@@ -229,10 +229,14 @@ class CandidatController extends Controller
             return response()->json(['message' => 'Utilisateur non authentifié'], 401);
         }
 
-        // Filtrer les candidats non archivés dont l'offre appartient à la même société que l'utilisateur connecté
+        // Filtrer les candidats non archivés, dont l'offre appartient à la même société,
+        // et qui n'ont pas un ScoreTest avec status = 'tricher'
         $candidats = Candidat::where('archived', 0)
             ->whereHas('offre', function ($query) use ($user) {
                 $query->where('societe', $user->nom_societe);
+            })
+            ->whereDoesntHave('scoreTest', function ($query) {
+                $query->where('status', 'tricher');
             })
             ->with(['offre:id,departement,domaine,datePublication,poste'])
             ->get();
@@ -244,7 +248,6 @@ class CandidatController extends Controller
 
         return response()->json($candidats);
     }
-
     /**
      * @OA\Put(
      *     path="/api/candidats/archiver/{id}",
@@ -593,6 +596,40 @@ class CandidatController extends Controller
 
         return response()->json($candidat);
     }
+    /**
+     * @OA\Post(
+     *     path="/api/getCandidatByEmail",
+     *     summary="Récupérer un candidat par email et ID d'offre",
+     *     operationId="getCandidatByEmail",
+     *     tags={"Candidat"},
+     *     @OA\RequestBody(
+     *         required=true,
+     *         @OA\JsonContent(
+     *             required={"email", "offre_id"},
+     *             @OA\Property(property="email", type="string", format="email", example="johndoe@example.com"),
+     *             @OA\Property(property="offre_id", type="integer", example=1)
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Candidat trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="id", type="integer", example=1),
+     *             @OA\Property(property="nom", type="string", example="Doe"),
+     *             @OA\Property(property="prenom", type="string", example="John"),
+     *             @OA\Property(property="email", type="string", format="email", example="johndoe@example.com")
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Candidat non trouvé",
+     *         description="Candidat non trouvé",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="error", type="string", example="Candidat non trouvé")
+     *         )
+     *     )
+     * )
+     */
 
     public function getCandidatByEmail(Request $request)
     {
@@ -610,5 +647,73 @@ class CandidatController extends Controller
         }
 
         return response()->json($candidat);
+    }
+
+    /**
+     * @OA\Get(
+     *     path="/api/candidats/status/{offre_id}",
+     *     summary="Récupérer les candidats par offre avec test terminé ou temps écoulé",
+     *     operationId="getCandidatsByOffreStatus",
+     *     tags={"Candidat"},
+     *     @OA\Parameter(
+     *         name="offre_id",
+     *         in="path",
+     *         required=true,
+     *         description="ID de l'offre",
+     *         @OA\Schema(type="integer", example=1)
+     *     ),
+     *     @OA\Response(
+     *         response=200,
+     *         description="Liste des candidats avec statut de test terminé ou temps écoulé",
+     *         @OA\JsonContent(
+     *             type="array",
+     *             @OA\Items(
+     *                 @OA\Property(property="id", type="integer", example=1),
+     *                 @OA\Property(property="nom", type="string", example="Doe"),
+     *                 @OA\Property(property="prenom", type="string", example="John"),
+     *                 @OA\Property(property="test_status", type="string", example="terminer"),
+     *                 @OA\Property(property="cv", type="string", example="https://example.com/storage/cvs/cv.pdf")
+     *             )
+     *         )
+     *     ),
+     *     @OA\Response(
+     *         response=404,
+     *         description="Offre non trouvée",
+     *         @OA\JsonContent(
+     *             @OA\Property(property="message", type="string", example="Offre non trouvée")
+     *         )
+     *     )
+     * )
+     */
+
+    public function getCandidatsByOffreStatus($offre_id)
+    {
+        // Vérifier si l'offre existe
+        $offre = Offre::find($offre_id);
+
+        if (!$offre) {
+            return response()->json(['message' => 'Offre non trouvée'], 404);
+        }
+
+        // Récupérer les candidats liés à cette offre ET ayant un test avec statut "terminer" ou "temps ecoule"
+        $candidats = Candidat::where('offre_id', $offre_id)
+            ->whereHas('scoreTest', function ($query) {
+                $query->whereIn('status', ['terminer', 'temps ecoule']);
+            })
+            ->with([
+                'offre:id,poste,departement',
+                'scoreTest' => function ($query) {
+                    $query->select('id', 'candidat_id', 'status', 'score_total'); // facultatif
+                }
+            ])
+            ->get();
+
+        // Ajouter l'URL du CV et le status du test pour chaque candidat
+        foreach ($candidats as $candidat) {
+            $candidat->cv = $candidat->cv ? asset('storage/' . $candidat->cv) : null;
+            $candidat->test_status = $candidat->scoreTest->status ?? null; // ajoute "terminer" ou "temps ecoule"
+        }
+
+        return response()->json($candidats, 200);
     }
 }
